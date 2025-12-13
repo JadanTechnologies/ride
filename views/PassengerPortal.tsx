@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapPin, Navigation, Clock, CreditCard, Star, Menu, Phone, MessageSquare, X, CheckCircle, Wallet, Plus, Zap, Share2, Timer, Map as MapIcon } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import L from 'leaflet';
+import * as L from 'leaflet'; // Changed to namespace import for better compatibility
 import { Ride, VehicleType } from '../types';
 import { VEHICLE_ICONS, CURRENCY, LAGOS_COORDS } from '../constants';
 import { Button } from '../components/Button';
@@ -19,8 +19,10 @@ interface PassengerPortalProps {
 
 type TripStatus = 'searching' | 'arriving' | 'arrived' | 'in_progress' | 'completed';
 
-// Custom Icons for Map
+// Custom Icons for Map - Guarded against L being undefined during initial module load
 const createMapIcon = (type: 'user' | 'keke' | 'okada' | 'bus' | 'destination', rotation = 0) => {
+    if (!L || !L.divIcon) return undefined; // Safety check
+
     let color = '#10b981';
     let iconHtml = '';
 
@@ -58,12 +60,18 @@ const createMapIcon = (type: 'user' | 'keke' | 'okada' | 'bus' | 'destination', 
 const MapComponent = ({ userLocation, drivers, assignedDriver, destination }) => {
     const map = useMap();
     useEffect(() => {
-        if (assignedDriver) {
-             map.flyTo([assignedDriver.lat, assignedDriver.lng], 15);
-        } else if (userLocation) {
-             map.flyTo([userLocation.lat, userLocation.lng], 14);
+        if (!map) return;
+        
+        try {
+            if (assignedDriver && !isNaN(assignedDriver.lat) && !isNaN(assignedDriver.lng)) {
+                 map.flyTo([assignedDriver.lat, assignedDriver.lng], 15);
+            } else if (userLocation && !isNaN(userLocation.lat) && !isNaN(userLocation.lng)) {
+                 map.flyTo([userLocation.lat, userLocation.lng], 14);
+            }
+        } catch (e) {
+            console.error("Map flyTo error:", e);
         }
-    }, [userLocation, assignedDriver]);
+    }, [userLocation, assignedDriver, map]);
 
     return (
         <>
@@ -71,14 +79,14 @@ const MapComponent = ({ userLocation, drivers, assignedDriver, destination }) =>
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            {userLocation && (
+            {userLocation && !isNaN(userLocation.lat) && (
                 <Marker position={[userLocation.lat, userLocation.lng]} icon={createMapIcon('user')}>
                     <Popup>Your Location</Popup>
                 </Marker>
             )}
             
             {/* Show Assigned Driver */}
-            {assignedDriver && (
+            {assignedDriver && !isNaN(assignedDriver.lat) && (
                 <Marker position={[assignedDriver.lat, assignedDriver.lng]} icon={createMapIcon(assignedDriver.type.toLowerCase(), assignedDriver.heading || 0)}>
                     <Popup>Your Driver</Popup>
                 </Marker>
@@ -97,7 +105,7 @@ const MapComponent = ({ userLocation, drivers, assignedDriver, destination }) =>
             ))}
 
             {/* Destination Marker */}
-            {destination && (
+            {destination && !isNaN(destination.lat) && (
                 <Marker position={[destination.lat, destination.lng]} icon={createMapIcon('destination')}>
                     <Popup>Destination</Popup>
                 </Marker>
@@ -120,13 +128,14 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
   const [tripProgress, setTripProgress] = useState(0);
 
   // Map Data State
-  const [userLocation] = useState(user.location || LAGOS_COORDS);
+  // Safety: ensure fallback if user.location is missing/undefined
+  const [userLocation] = useState(user?.location || LAGOS_COORDS);
   const [destinationLocation, setDestinationLocation] = useState<any>(null);
   const [nearbyDrivers, setNearbyDrivers] = useState<any[]>([]);
   const [assignedDriverPos, setAssignedDriverPos] = useState<any>(null);
 
   // Data State
-  const [walletBalance, setWalletBalance] = useState(user.walletBalance);
+  const [walletBalance, setWalletBalance] = useState(user?.walletBalance || 0);
 
   // Simulation Refs
   const rideTimers = useRef<any[]>([]);
@@ -134,6 +143,8 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
 
   // Generate initial fake drivers around user
   useEffect(() => {
+    if (!userLocation) return;
+    
     const types = ['Keke', 'Okada', 'Bus'];
     // Generate more drivers (8) with heading data
     const fakeDrivers = Array.from({length: 8}).map((_, i) => ({
@@ -172,8 +183,10 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
 
   // Sync wallet balance when user prop changes (e.g. after a ride)
   useEffect(() => {
-    setWalletBalance(user.walletBalance);
-  }, [user.walletBalance]);
+    if (user) {
+        setWalletBalance(user.walletBalance);
+    }
+  }, [user]);
 
   // Cleanup timers on unmount
   useEffect(() => {
@@ -339,9 +352,9 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
         </button>
         <div className="hidden md:flex flex-col gap-4 bg-white p-4 rounded-xl shadow-xl w-80 pointer-events-auto border border-gray-100">
            <div className="flex items-center gap-3 border-b border-gray-100 pb-4">
-              <img src={user.avatarUrl} alt="User" className="w-12 h-12 rounded-full bg-gray-200" />
+              <img src={user?.avatarUrl} alt="User" className="w-12 h-12 rounded-full bg-gray-200" />
               <div>
-                <h2 className="font-bold text-gray-800">{user.name}</h2>
+                <h2 className="font-bold text-gray-800">{user?.name || 'Guest'}</h2>
                 <p className="text-sm text-gray-500">{CURRENCY}{walletBalance.toLocaleString()} Wallet</p>
               </div>
            </div>
@@ -364,14 +377,20 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
 
       {/* Map Area */}
       <div className="flex-1 relative h-full z-0">
-         <MapContainer center={[userLocation.lat, userLocation.lng]} zoom={14} style={{ height: '100%', width: '100%' }} zoomControl={false}>
-            <MapComponent 
-                userLocation={userLocation} 
-                drivers={nearbyDrivers} 
-                assignedDriver={assignedDriverPos} 
-                destination={destinationLocation}
-            />
-         </MapContainer>
+         {userLocation && !isNaN(userLocation.lat) ? (
+             <MapContainer center={[userLocation.lat, userLocation.lng]} zoom={14} style={{ height: '100%', width: '100%' }} zoomControl={false}>
+                <MapComponent 
+                    userLocation={userLocation} 
+                    drivers={nearbyDrivers} 
+                    assignedDriver={assignedDriverPos} 
+                    destination={destinationLocation}
+                />
+             </MapContainer>
+         ) : (
+             <div className="flex items-center justify-center h-full bg-gray-200">
+                 <p className="text-gray-500">Loading Map...</p>
+             </div>
+         )}
       </div>
 
       {/* Interface Panels */}
