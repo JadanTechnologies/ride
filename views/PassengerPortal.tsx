@@ -534,9 +534,18 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
                                         </div>
                                         <div>
                                             <p className="text-xs text-brand-600 font-bold uppercase tracking-wider">Estimated Arrival</p>
-                                            <p className="text-2xl font-bold text-brand-900">
-                                                {Math.max(1, Math.ceil((parseInt(estimatedRide?.duration || "15") || 15) * (1 - tripProgress / 100)))} mins
-                                            </p>
+                                            <div className="flex items-baseline gap-2">
+                                                <p className="text-2xl font-bold text-brand-900">
+                                                    {Math.max(1, Math.ceil((parseInt(estimatedRide?.duration || "15") || 15) * (1 - tripProgress / 100)))} mins
+                                                </p>
+                                                <span className="text-sm text-brand-700 font-medium bg-brand-100 px-2 py-0.5 rounded">
+                                                    {(() => {
+                                                        const minsRemaining = Math.max(1, Math.ceil((parseInt(estimatedRide?.duration || "15") || 15) * (1 - tripProgress / 100)));
+                                                        const arrivalTime = new Date(Date.now() + minsRemaining * 60000);
+                                                        return arrivalTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+                                                    })()}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                     <div className="text-right">
