@@ -33,12 +33,25 @@ const createMapIcon = (type: 'user' | 'keke' | 'okada' | 'bus' | 'destination', 
       iconHtml = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
     }
   
+    // Add a directional pointer for vehicles
+    const isVehicle = ['keke', 'okada', 'bus'].includes(type);
+    const pointerHtml = isVehicle ? 
+      `<div style="position: absolute; top: -4px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-bottom: 6px solid ${color};"></div>` 
+      : '';
+
     return L.divIcon({
       className: 'custom-icon',
-      html: `<div style="background-color: ${color}; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3); border: 2px solid white; transform: rotate(${rotation}deg)">${iconHtml}</div>`,
+      html: `
+        <div style="position: relative; width: 32px; height: 32px; transform: rotate(${rotation}deg); transition: transform 0.5s linear;">
+            ${pointerHtml}
+            <div style="background-color: ${color}; width: 100%; height: 100%; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3); border: 2px solid white; transform: rotate(-${rotation}deg);">
+                ${iconHtml}
+            </div>
+        </div>
+      `,
       iconSize: [32, 32],
-      iconAnchor: [16, 32],
-      popupAnchor: [0, -32]
+      iconAnchor: [16, 16],
+      popupAnchor: [0, -20]
     });
 };
 
@@ -66,15 +79,20 @@ const MapComponent = ({ userLocation, drivers, assignedDriver, destination }) =>
             
             {/* Show Assigned Driver */}
             {assignedDriver && (
-                <Marker position={[assignedDriver.lat, assignedDriver.lng]} icon={createMapIcon(assignedDriver.type.toLowerCase())}>
+                <Marker position={[assignedDriver.lat, assignedDriver.lng]} icon={createMapIcon(assignedDriver.type.toLowerCase(), assignedDriver.heading || 0)}>
                     <Popup>Your Driver</Popup>
                 </Marker>
             )}
 
             {/* Show Nearby Drivers (if no assigned driver) */}
             {!assignedDriver && drivers.map((d: any) => (
-                <Marker key={d.id} position={[d.lat, d.lng]} icon={createMapIcon(d.type.toLowerCase())}>
-                   <Popup>{d.type} - 4 mins away</Popup>
+                <Marker key={d.id} position={[d.lat, d.lng]} icon={createMapIcon(d.type.toLowerCase(), d.heading)}>
+                   <Popup>
+                       <div className="text-center p-1">
+                           <span className="font-bold block text-sm">{d.type}</span>
+                           <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full border border-green-100">Available</span>
+                       </div>
+                   </Popup>
                 </Marker>
             ))}
 
@@ -117,22 +135,38 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
   // Generate initial fake drivers around user
   useEffect(() => {
     const types = ['Keke', 'Okada', 'Bus'];
-    const fakeDrivers = Array.from({length: 5}).map((_, i) => ({
+    // Generate more drivers (8) with heading data
+    const fakeDrivers = Array.from({length: 8}).map((_, i) => ({
         id: i,
-        lat: userLocation.lat + (Math.random() - 0.5) * 0.01,
-        lng: userLocation.lng + (Math.random() - 0.5) * 0.01,
-        type: types[i % 3]
+        lat: userLocation.lat + (Math.random() - 0.5) * 0.02,
+        lng: userLocation.lng + (Math.random() - 0.5) * 0.02,
+        type: types[i % 3],
+        heading: Math.random() * 360,
+        speed: 0.0001 + Math.random() * 0.0002
     }));
     setNearbyDrivers(fakeDrivers);
 
-    // Simulate idle movement
+    // Simulate movement with bearing
     const interval = setInterval(() => {
-        setNearbyDrivers(prev => prev.map(d => ({
-            ...d,
-            lat: d.lat + (Math.random() - 0.5) * 0.0005,
-            lng: d.lng + (Math.random() - 0.5) * 0.0005
-        })));
-    }, 2000);
+        setNearbyDrivers(prev => prev.map(d => {
+             // Wiggle heading
+             const headingChange = (Math.random() - 0.5) * 30;
+             const newHeading = (d.heading + headingChange + 360) % 360;
+             
+             // Move based on heading
+             const rad = newHeading * (Math.PI / 180);
+             // Adjust lat/lng (simple flat earth approx for small distances)
+             const newLat = d.lat + Math.cos(rad) * d.speed;
+             const newLng = d.lng + Math.sin(rad) * d.speed;
+
+             return {
+                 ...d,
+                 lat: newLat,
+                 lng: newLng,
+                 heading: newHeading
+             };
+        }));
+    }, 1000);
     return () => clearInterval(interval);
   }, [userLocation]);
 
@@ -195,11 +229,12 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
     setTripProgress(0);
     clearSimulation();
     
-    // Initialize assigned driver at a random nearby spot
+    // Initialize assigned driver at a random nearby spot with heading
     const driverStartPos = {
         lat: userLocation.lat - 0.005,
         lng: userLocation.lng - 0.005,
-        type: selectedVehicle || 'Keke'
+        type: selectedVehicle || 'Keke',
+        heading: 45
     };
     setAssignedDriverPos(null); // Not assigned yet
 
@@ -228,10 +263,19 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
             // Move driver towards destination
             setAssignedDriverPos((prev: any) => {
                 if(!prev || !destinationLocation) return prev;
+                // Simple interpolation towards destination
+                const latDiff = destinationLocation.lat - userLocation.lat;
+                const lngDiff = destinationLocation.lng - userLocation.lng;
+                
+                // Approximate heading towards destination
+                const angleRad = Math.atan2(lngDiff, latDiff);
+                const angleDeg = (angleRad * 180 / Math.PI + 360) % 360;
+
                 return {
                     ...prev,
-                    lat: prev.lat + (destinationLocation.lat - userLocation.lat) * 0.05,
-                    lng: prev.lng + (destinationLocation.lng - userLocation.lng) * 0.05
+                    lat: prev.lat + latDiff * 0.05,
+                    lng: prev.lng + lngDiff * 0.05,
+                    heading: angleDeg
                 };
             });
 
