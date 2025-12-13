@@ -3,7 +3,7 @@ import { User, VehicleType, WithdrawalRequest } from '../types';
 import { CURRENCY, VEHICLE_ICONS, LAGOS_COORDS } from '../constants';
 import { Navigation, Wallet, Bell, Phone, MessageSquare, ArrowRight, Zap, Lock, AlertCircle, Clock, RotateCcw } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import L from 'leaflet';
+import * as L from 'leaflet';
 import { Button } from '../components/Button';
 
 interface DriverPortalProps {
@@ -24,45 +24,61 @@ type DriverRideStatus = 'idle' | 'en_route_pickup' | 'arrived_pickup' | 'in_prog
 type ViewState = 'home' | 'earnings';
 
 // Custom Map Icons
-const createDriverIcon = (rotation = 0) => L.divIcon({
-  className: 'custom-icon',
-  html: `<div style="background-color: #10b981; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3); border: 3px solid white; transform: rotate(${rotation}deg)"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg></div>`,
-  iconSize: [40, 40],
-  iconAnchor: [20, 40]
-});
+const createDriverIcon = (rotation = 0) => {
+  if (!L || !L.divIcon) return undefined;
+  return L.divIcon({
+    className: 'custom-icon',
+    html: `<div style="background-color: #10b981; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3); border: 3px solid white; transform: rotate(${rotation}deg)"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg></div>`,
+    iconSize: [40, 40],
+    iconAnchor: [20, 40]
+  });
+};
 
-const createPinIcon = (color: string) => L.divIcon({
-  className: 'custom-icon',
-  html: `<div style="background-color: ${color}; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3); border: 2px solid white;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></div>`,
-  iconSize: [32, 32],
-  iconAnchor: [16, 32],
-  popupAnchor: [0, -32]
-});
+const createPinIcon = (color: string) => {
+  if (!L || !L.divIcon) return undefined;
+  return L.divIcon({
+    className: 'custom-icon',
+    html: `<div style="background-color: ${color}; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3); border: 2px solid white;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></div>`,
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -32]
+  });
+};
 
 const DriverMap = ({ position, pickup, dropoff }) => {
     const map = useMap();
     useEffect(() => {
-        if (position) {
-            map.flyTo([position.lat, position.lng], 15);
+        if (!map) return;
+        try {
+            if (position && !isNaN(position.lat) && !isNaN(position.lng)) {
+                map.flyTo([position.lat, position.lng], 15);
+            }
+        } catch(e) {
+            console.error("Map error", e);
         }
-    }, [position]);
+    }, [position, map]);
+
+    const driverIcon = createDriverIcon(45);
+    const pickupIcon = createPinIcon('#fbbf24');
+    const dropoffIcon = createPinIcon('#10b981');
+
     return (
         <>
             <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            {position && (
-                <Marker position={[position.lat, position.lng]} icon={createDriverIcon(45)}>
+            {position && !isNaN(position.lat) && driverIcon && (
+                <Marker position={[position.lat, position.lng]} icon={driverIcon}>
                 </Marker>
             )}
-            {pickup && (
-                <Marker position={[pickup.lat, pickup.lng]} icon={createPinIcon('#fbbf24')}>
+            {pickup && !isNaN(pickup.lat) && pickupIcon && (
+                <Marker position={[pickup.lat, pickup.lng]} icon={pickupIcon}>
                     <Popup>Pickup Location</Popup>
                 </Marker>
             )}
-            {dropoff && (
-                <Marker position={[dropoff.lat, dropoff.lng]} icon={createPinIcon('#10b981')}>
+            {dropoff && !isNaN(dropoff.lat) && dropoffIcon && (
+                <Marker position={[dropoff.lat, dropoff.lng]} icon={dropoffIcon}>
                     <Popup>Dropoff Location</Popup>
                 </Marker>
             )}

@@ -3,7 +3,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell 
 } from 'recharts';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import L from 'leaflet';
+import * as L from 'leaflet';
 import { Users, Truck, DollarSign, Activity, AlertCircle, Settings, Check, X, Shield, Search, MoreVertical, ArrowUpRight, Zap, Ban, Map as MapIcon, Send, UserPlus, Briefcase, Bike, Bus } from 'lucide-react';
 import { CURRENCY, LAGOS_COORDS } from '../constants';
 import { Button } from '../components/Button';
@@ -48,6 +48,8 @@ const COLORS = ['#10b981', '#f59e0b', '#3b82f6'];
 
 // Custom Icons for Leaflet
 const createIcon = (type: VehicleType | 'USER') => {
+  if (!L || !L.divIcon) return undefined;
+
   let color = '#10b981';
   let iconHtml = '';
 
@@ -299,37 +301,45 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 />
                 
                 {/* Driver Markers */}
-                {drivers.map(d => (
-                  <Marker 
-                    key={`driver-${d.id}`} 
-                    position={[d.location.lat, d.location.lng]}
-                    icon={createIcon(d.vehicle === 'Keke' ? VehicleType.KEKE : d.vehicle === 'Okada' ? VehicleType.OKADA : VehicleType.BUS)}
-                  >
-                    <Popup>
-                      <div className="p-2">
-                        <h4 className="font-bold">{d.name}</h4>
-                        <p className="text-sm capitalize">{d.vehicle} • {d.status}</p>
-                        <p className="text-xs text-gray-500">{d.rating} ★</p>
-                      </div>
-                    </Popup>
-                  </Marker>
-                ))}
+                {drivers.map(d => {
+                  const icon = createIcon(d.vehicle === 'Keke' ? VehicleType.KEKE : d.vehicle === 'Okada' ? VehicleType.OKADA : VehicleType.BUS);
+                  if (!icon) return null;
+                  return (
+                    <Marker 
+                        key={`driver-${d.id}`} 
+                        position={[d.location.lat, d.location.lng]}
+                        icon={icon}
+                    >
+                        <Popup>
+                        <div className="p-2">
+                            <h4 className="font-bold">{d.name}</h4>
+                            <p className="text-sm capitalize">{d.vehicle} • {d.status}</p>
+                            <p className="text-xs text-gray-500">{d.rating} ★</p>
+                        </div>
+                        </Popup>
+                    </Marker>
+                  );
+                })}
 
                 {/* User Markers (Only Active) */}
-                {users.filter(u => u.status === 'Active').map(u => (
-                  <Marker 
-                    key={`user-${u.id}`} 
-                    position={[u.location.lat, u.location.lng]}
-                    icon={createIcon('USER')}
-                  >
-                    <Popup>
-                      <div className="p-2">
-                        <h4 className="font-bold">{u.name}</h4>
-                        <p className="text-sm">Passenger</p>
-                      </div>
-                    </Popup>
-                  </Marker>
-                ))}
+                {users.filter(u => u.status === 'Active').map(u => {
+                  const icon = createIcon('USER');
+                  if (!icon) return null;
+                  return (
+                    <Marker 
+                        key={`user-${u.id}`} 
+                        position={[u.location.lat, u.location.lng]}
+                        icon={icon}
+                    >
+                        <Popup>
+                        <div className="p-2">
+                            <h4 className="font-bold">{u.name}</h4>
+                            <p className="text-sm">Passenger</p>
+                        </div>
+                        </Popup>
+                    </Marker>
+                  );
+                })}
              </MapContainer>
              
              {/* Map Legend Overlay */}
