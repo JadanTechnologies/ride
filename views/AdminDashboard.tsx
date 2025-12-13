@@ -332,7 +332,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
         );
 
-      // ... (other cases drivers, users, rides etc. kept same, code block truncated for brevity if allowed, but inserting full file below)
       case 'drivers':
         const filteredDrivers = drivers.filter(d => {
             if (driverTab === 'active') return d.status === 'Active' || d.status === 'Suspended';

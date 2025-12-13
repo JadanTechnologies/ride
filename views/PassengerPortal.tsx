@@ -46,15 +46,15 @@ const createMapIcon = (type: 'user' | 'keke' | 'okada' | 'bus' | 'destination', 
     return Leaflet.divIcon({
       className: 'custom-icon',
       html: `
-        <div style="position: relative; width: 32px; height: 32px; transform: rotate(${rotation}deg); transition: transform 0.5s linear;">
+        <div style="position: relative; width: 36px; height: 36px; transform: rotate(${rotation}deg); transition: transform 0.5s linear;">
             ${pointerHtml}
             <div style="background-color: ${color}; width: 100%; height: 100%; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3); border: 2px solid white; transform: rotate(-${rotation}deg);">
                 ${iconHtml}
             </div>
         </div>
       `,
-      iconSize: [32, 32],
-      iconAnchor: [16, 16],
+      iconSize: [36, 36],
+      iconAnchor: [18, 18],
       popupAnchor: [0, -20]
     });
 };
@@ -107,7 +107,7 @@ const MapComponent = ({ userLocation, drivers, assignedDriver, destination }) =>
                     <Marker key={d.id} position={[d.lat, d.lng]} icon={icon}>
                     <Popup>
                         <div className="text-center p-1">
-                            <span className="font-bold block text-sm">{d.type}</span>
+                            <span className="font-bold block text-sm capitalize">{d.type}</span>
                             <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full border border-green-100">Available</span>
                         </div>
                     </Popup>
@@ -432,8 +432,7 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
                         </Button>
                     </div>
                 )}
-                
-                {/* ... (rest of the steps: estimating, confirm) - Kept same as previous but omitted for brevity if no logic changed, but since I'm outputting full file, I include them */}
+
                 {bookingStep === 'estimating' && (
                     <div className="py-12 flex flex-col items-center justify-center space-y-4">
                         <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
@@ -607,7 +606,7 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
                     </div>
                 )}
                 
-                {/* Completed View - Kept same as previous */}
+                {/* Completed View */}
                 {tripStatus === 'completed' && (
                     <div className="p-8 text-center animate-in zoom-in duration-300">
                         <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -628,7 +627,7 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
              </div>
         )}
 
-        {/* History & Wallet Overlays - Kept same */}
+        {/* History & Wallet Overlays */}
         {viewState === 'history' && (
              <div className="bg-white md:rounded-2xl shadow-2xl h-[600px] flex flex-col">
                 <div className="p-4 border-b border-gray-100 flex justify-between items-center">
