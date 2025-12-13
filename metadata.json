@@ -1,0 +1,9 @@
+{
+  "name": "Copy of Keke Napepe Ride",
+  "description": "A modern, Nigerian-focused ride-hailing platform connecting passengers with Keke, Okada, and Bus drivers. Features real-time booking, driver management, and an AI-powered support assistant.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}
