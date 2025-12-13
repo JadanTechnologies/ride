@@ -550,7 +550,7 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
                                 </div>
                             )}
 
-                            {tripStatus !== 'in_progress' && (
+                            {tripStatus === 'arriving' && (
                                 <Button variant="danger" className="w-full bg-red-50 text-red-600 hover:bg-red-100 border-none shadow-none" onClick={handleCancelRide}>
                                     Cancel Ride
                                 </Button>
