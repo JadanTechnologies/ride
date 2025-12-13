@@ -325,7 +325,7 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
                         
                         {/* Driver Details */}
                         <div className="p-6">
-                            {/* NEW: ETA Display for In Progress */}
+                            {/* ETA Display for In Progress */}
                             {tripStatus === 'in_progress' && (
                                 <div className="bg-brand-50 border border-brand-100 p-4 rounded-xl mb-6 flex items-center justify-between shadow-sm animate-in zoom-in duration-300">
                                     <div className="flex items-center gap-3">
@@ -334,7 +334,9 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
                                         </div>
                                         <div>
                                             <p className="text-xs text-brand-600 font-bold uppercase tracking-wider">Estimated Arrival</p>
-                                            <p className="text-2xl font-bold text-brand-900">{Math.max(1, 15 - Math.floor(tripProgress / 7))} mins</p>
+                                            <p className="text-2xl font-bold text-brand-900">
+                                                {Math.max(1, Math.ceil((parseInt(estimatedRide?.duration || "15") || 15) * (1 - tripProgress / 100)))} mins
+                                            </p>
                                         </div>
                                     </div>
                                     <div className="text-right">
@@ -342,7 +344,9 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
                                             <Map size={14} />
                                             <span className="text-xs">Distance Left</span>
                                         </div>
-                                        <p className="font-bold text-gray-800 text-lg">{(2.4 * (1 - tripProgress/100)).toFixed(1)} km</p>
+                                        <p className="font-bold text-gray-800 text-lg">
+                                            {((parseFloat(estimatedRide?.distance?.split(' ')[0] || "2.5") || 2.5) * (1 - tripProgress / 100)).toFixed(1)} km
+                                        </p>
                                     </div>
                                 </div>
                             )}
