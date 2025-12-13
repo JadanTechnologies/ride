@@ -167,7 +167,7 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ user, pricing, commi
     switch (rideStatus) {
       case 'en_route_pickup':
         setRideStatus('arrived_pickup');
-        // Move driver to pickup
+        // Move driver to pickup immediately (snap) for demo simplicity upon arrival check
         setDriverLocation(pickupCoords);
         onNotify('info', "Arrived at pickup location.");
         break;
@@ -177,7 +177,7 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ user, pricing, commi
         break;
       case 'in_progress':
         setRideStatus('completed');
-        // Move driver to dropoff
+        // Move driver to dropoff immediately (snap)
         setDriverLocation(dropoffCoords);
         
         // Calculate earnings and update history
@@ -221,6 +221,31 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ user, pricing, commi
         break;
     }
   };
+
+  // Effect to simulate driver movement towards destination during active trip
+  useEffect(() => {
+    if (rideStatus === 'idle' || rideStatus === 'completed' || rideStatus === 'arrived_pickup') return;
+    
+    const target = rideStatus === 'en_route_pickup' ? pickupCoords : dropoffCoords;
+    if (!target) return;
+
+    const interval = setInterval(() => {
+        setDriverLocation((prev: any) => {
+            const latDiff = target.lat - prev.lat;
+            const lngDiff = target.lng - prev.lng;
+            
+            // If close enough, don't move (waiting for user action to 'Arrive')
+            if (Math.abs(latDiff) < 0.0001 && Math.abs(lngDiff) < 0.0001) return prev;
+
+            return {
+                lat: prev.lat + latDiff * 0.05, // Move 5% towards target per tick
+                lng: prev.lng + lngDiff * 0.05
+            };
+        });
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  }, [rideStatus, pickupCoords, dropoffCoords]);
 
   const RequestIcon = activeRequest ? (VEHICLE_ICONS[activeRequest.vehicleType as VehicleType] || VEHICLE_ICONS.KEKE) : VEHICLE_ICONS.KEKE;
 

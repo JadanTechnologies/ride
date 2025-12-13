@@ -177,14 +177,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     if (currentView !== 'map') return;
     
     const interval = setInterval(() => {
+      // Move Drivers
       setDrivers(prev => prev.map(d => {
         if (d.status !== 'Active') return d;
-        // Random small movement
         return {
           ...d,
           location: {
             lat: d.location.lat + (Math.random() - 0.5) * 0.001,
             lng: d.location.lng + (Math.random() - 0.5) * 0.001
+          }
+        };
+      }));
+
+      // Move Active Users
+      setUsers(prev => prev.map(u => {
+        if (u.status !== 'Active') return u;
+        return {
+          ...u,
+          location: {
+            lat: u.location.lat + (Math.random() - 0.5) * 0.0005,
+            lng: u.location.lng + (Math.random() - 0.5) * 0.0005
           }
         };
       }));
