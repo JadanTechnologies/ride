@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MapPin, Navigation, Clock, CreditCard, Star, Menu, Phone, MessageSquare, X, CheckCircle, Wallet, Plus, Zap, Share2 } from 'lucide-react';
 import { Ride, VehicleType } from '../types';
 import { VEHICLE_ICONS, CURRENCY } from '../constants';
@@ -31,6 +31,11 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
 
   // Data State
   const [walletBalance, setWalletBalance] = useState(user.walletBalance);
+
+  // Sync wallet balance when user prop changes (e.g. after a ride)
+  useEffect(() => {
+    setWalletBalance(user.walletBalance);
+  }, [user.walletBalance]);
 
   // Mock Map Background
   const MapBackground = () => (
@@ -121,7 +126,6 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
         };
         // Call parent handler
         onRideComplete(newRide);
-        setWalletBalance(prev => prev - fare);
         onNotify('success', `Ride completed! Paid ${CURRENCY}${fare}`);
     }
 

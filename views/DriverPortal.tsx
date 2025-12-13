@@ -358,11 +358,11 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ user, pricing, commi
 
                     <div className="space-y-6">
                         {/* Withdrawal History Section */}
-                        {withdrawals.length > 0 && (
-                            <div>
-                                <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                                    <Wallet size={20} className="text-gray-500" /> Withdrawals
-                                </h3>
+                        <div>
+                            <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                                <Wallet size={20} className="text-gray-500" /> Withdrawals
+                            </h3>
+                            {withdrawals.length > 0 ? (
                                 <div className="space-y-3">
                                     {withdrawals.map((req) => (
                                         <div key={req.id} className="flex justify-between items-center p-4 bg-white rounded-xl shadow-sm border border-gray-100">
@@ -379,8 +379,10 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ user, pricing, commi
                                         </div>
                                     ))}
                                 </div>
-                            </div>
-                        )}
+                            ) : (
+                                <p className="text-gray-400 text-sm italic">No withdrawal history yet.</p>
+                            )}
+                        </div>
 
                         {/* Ride History Section */}
                         <div>

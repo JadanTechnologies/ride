@@ -3,9 +3,9 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell 
 } from 'recharts';
 import { Users, Truck, DollarSign, Activity, AlertCircle, Settings, Check, X, Shield, Search, MoreVertical, ArrowUpRight, Zap, Ban, Map, Send } from 'lucide-react';
-import { CURRENCY, VehicleType } from '../constants';
+import { CURRENCY } from '../constants';
 import { Button } from '../components/Button';
-import { User, Driver, WithdrawalRequest } from '../types';
+import { User, Driver, WithdrawalRequest, VehicleType } from '../types';
 
 interface AdminDashboardProps {
   currentPricing: any;
@@ -138,7 +138,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     if(!broadcastInput.trim()) return;
     onBroadcast(broadcastInput);
     setBroadcastInput('');
-    alert("Announcement sent to all active users.");
   };
 
   const handleApproveDriver = (id: number | string) => {
@@ -180,8 +179,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     onUpdatePricing(pricingForm);
     onUpdateCommission(commissionForm);
     onUpdateSurge(surgeForm);
-    alert("Platform configuration updated successfully!");
   };
+
+  const pendingWithdrawalsCount = withdrawalRequests.filter(w => w.status === 'Pending').length;
 
   const renderContent = () => {
     switch(currentView) {
@@ -387,7 +387,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                    <p className="text-sm text-gray-500 mb-1">Pending Withdrawals</p>
                    <h2 className="text-3xl font-bold text-gray-900">{CURRENCY}{withdrawalRequests.filter(w => w.status === 'Pending').reduce((a, b) => a + b.amount, 0).toLocaleString()}</h2>
-                   <span className="text-gray-500 text-xs mt-2 block">{withdrawalRequests.filter(w => w.status === 'Pending').length} Drivers waiting</span>
+                   <span className="text-gray-500 text-xs mt-2 block">{pendingWithdrawalsCount} Drivers waiting</span>
                 </div>
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                    <p className="text-sm text-gray-500 mb-1">Net Revenue (Month)</p>
@@ -399,36 +399,40 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <div className="p-6 border-b border-gray-100">
                    <h3 className="font-bold text-gray-800">Withdrawal Requests</h3>
                 </div>
-                <table className="w-full text-left">
-                  <thead className="bg-gray-50 text-gray-500 text-sm">
-                    <tr>
-                      <th className="p-4 font-medium">Driver</th>
-                      <th className="p-4 font-medium">Amount</th>
-                      <th className="p-4 font-medium">Date</th>
-                      <th className="p-4 font-medium">Status</th>
-                      <th className="p-4 font-medium text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {withdrawalRequests.map((w) => (
-                      <tr key={w.id} className="hover:bg-gray-50">
-                        <td className="p-4 font-bold text-gray-900">{w.driverName}</td>
-                        <td className="p-4">{CURRENCY}{w.amount.toLocaleString()}</td>
-                        <td className="p-4 text-gray-500">{w.date}</td>
-                        <td className="p-4">
-                           <span className={`px-2 py-1 rounded text-xs font-bold ${
-                              w.status === 'Pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'
-                           }`}>{w.status}</span>
-                        </td>
-                        <td className="p-4 text-right">
-                           {w.status === 'Pending' && (
-                              <Button onClick={() => onProcessWithdrawal(w.id)} className="py-1 px-3 text-xs" variant="primary">Pay Now</Button>
-                           )}
-                        </td>
+                {withdrawalRequests.length > 0 ? (
+                  <table className="w-full text-left">
+                    <thead className="bg-gray-50 text-gray-500 text-sm">
+                      <tr>
+                        <th className="p-4 font-medium">Driver</th>
+                        <th className="p-4 font-medium">Amount</th>
+                        <th className="p-4 font-medium">Date</th>
+                        <th className="p-4 font-medium">Status</th>
+                        <th className="p-4 font-medium text-right">Action</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {withdrawalRequests.map((w) => (
+                        <tr key={w.id} className="hover:bg-gray-50">
+                          <td className="p-4 font-bold text-gray-900">{w.driverName}</td>
+                          <td className="p-4">{CURRENCY}{w.amount.toLocaleString()}</td>
+                          <td className="p-4 text-gray-500">{w.date}</td>
+                          <td className="p-4">
+                            <span className={`px-2 py-1 rounded text-xs font-bold ${
+                                w.status === 'Pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'
+                            }`}>{w.status}</span>
+                          </td>
+                          <td className="p-4 text-right">
+                            {w.status === 'Pending' && (
+                                <Button onClick={() => onProcessWithdrawal(w.id)} className="py-1 px-3 text-xs" variant="primary">Pay Now</Button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div className="p-8 text-center text-gray-500 italic">No active withdrawal requests</div>
+                )}
              </div>
           </div>
         );
@@ -716,9 +720,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
             <div 
                onClick={() => setCurrentView('finance')}
-               className={`p-3 rounded-lg flex items-center gap-3 cursor-pointer ${currentView === 'finance' ? 'bg-brand-600' : 'text-gray-400 hover:bg-slate-800'}`}
+               className={`p-3 rounded-lg flex items-center gap-3 cursor-pointer justify-between ${currentView === 'finance' ? 'bg-brand-600' : 'text-gray-400 hover:bg-slate-800'}`}
             >
-               <DollarSign size={20} /> Finance
+               <div className="flex items-center gap-3">
+                 <DollarSign size={20} /> Finance
+               </div>
+               {pendingWithdrawalsCount > 0 && (
+                   <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{pendingWithdrawalsCount}</span>
+               )}
             </div>
             <div 
               onClick={() => setCurrentView('settings')}

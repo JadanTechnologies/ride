@@ -1,46 +1,37 @@
 import React, { useState } from 'react';
 import { Auth } from './views/Auth';
-import { LandingPage } from './views/LandingPage';
 import { PassengerPortal } from './views/PassengerPortal';
 import { DriverPortal } from './views/DriverPortal';
 import { AdminDashboard } from './views/AdminDashboard';
 import { ChatWidget } from './components/ChatWidget';
 import { ToastContainer } from './components/Toast';
-import { UserRole, AppNotification, VehicleType, WithdrawalRequest } from './types';
+import { UserRole, AppNotification, VehicleType, WithdrawalRequest, Driver } from './types';
 import { MOCK_USER, MOCK_DRIVER, PRICING as DEFAULT_PRICING, DEFAULT_COMMISSION } from './constants';
-import { useLocalStorage } from './hooks/useLocalStorage';
 
 const App: React.FC = () => {
-  const [currentRole, setCurrentRole] = useLocalStorage<UserRole | null>('currentRole', null);
-  const [showLanding, setShowLanding] = useState(true);
+  const [currentRole, setCurrentRole] = useState<UserRole | null>(null);
   
-  // User/Driver State (with localStorage persistence)
-  const [passengerData, setPassengerData] = useLocalStorage(
-    'passengerData',
-    MOCK_USER
-  );
-  const [driverData, setDriverData] = useLocalStorage(
-    'driverData',
-    MOCK_DRIVER
-  );
+  // User/Driver State
+  const [passengerData, setPassengerData] = useState(MOCK_USER);
+  const [driverData, setDriverData] = useState<Driver>(MOCK_DRIVER as unknown as Driver);
 
   // Global Ride/History State (Persistence)
-  const [passengerHistory, setPassengerHistory] = useLocalStorage<any[]>('passengerHistory', [
+  const [passengerHistory, setPassengerHistory] = useState<any[]>([
     { id: 'mock-1', pickup: 'Market Square', dropoff: 'Office', date: 'Today, 8:30 AM', price: 450, status: 'Completed', vehicle: VehicleType.KEKE },
     { id: 'mock-2', pickup: 'Church', dropoff: 'Home', date: 'Yesterday', price: 800, status: 'Completed', vehicle: VehicleType.OKADA }
   ]);
-  const [driverHistory, setDriverHistory] = useLocalStorage<any[]>('driverHistory', [
+  const [driverHistory, setDriverHistory] = useState<any[]>([
       { id: 'h-1', type: 'Trip Payment', time: 'Today, 2:30 PM', amount: 650 },
       { id: 'h-2', type: 'Trip Payment', time: 'Today, 1:15 PM', amount: 900 },
       { id: 'h-3', type: 'Trip Payment', time: 'Today, 11:00 AM', amount: 1200 },
   ]);
-  const [driverDailyEarnings, setDriverDailyEarnings] = useLocalStorage('driverDailyEarnings', 8500);
+  const [driverDailyEarnings, setDriverDailyEarnings] = useState(8500);
 
-  // Global Admin State (with localStorage persistence)
-  const [pricing, setPricing] = useLocalStorage('platformPricing', DEFAULT_PRICING);
-  const [commissionRate, setCommissionRate] = useLocalStorage('commissionRate', DEFAULT_COMMISSION);
-  const [surge, setSurge] = useLocalStorage('surgeMultiplier', 1.0);
-  const [withdrawalRequests, setWithdrawalRequests] = useLocalStorage<WithdrawalRequest[]>('withdrawalRequests', [
+  // Global Admin State
+  const [pricing, setPricing] = useState(DEFAULT_PRICING);
+  const [commissionRate, setCommissionRate] = useState(DEFAULT_COMMISSION);
+  const [surge, setSurge] = useState(1.0); // 1.0x is normal price
+  const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([
       { id: 'w-1', driverId: 'd-999', driverName: 'Ibrahim Musa', amount: 12500, status: 'Pending', date: 'Today, 10:00 AM' }
   ]);
   
@@ -58,7 +49,6 @@ const App: React.FC = () => {
 
   const handleLogin = (role: UserRole, userData?: { name: string; email: string; phone: string; vehicleType?: VehicleType; status?: string }) => {
     setCurrentRole(role);
-    setShowLanding(false);
     
     // Update profile if registering/sending new data
     if (userData) {
@@ -70,7 +60,7 @@ const App: React.FC = () => {
           ...prev, 
           ...userData,
           vehicleType: userData.vehicleType || prev.vehicleType,
-          status: (userData.status as any) || 'Pending' 
+          status: (userData.status as Driver['status']) || 'Pending' 
         }));
         
         if (userData.status === 'Pending') {
@@ -88,7 +78,6 @@ const App: React.FC = () => {
 
   const handleLogout = () => {
     setCurrentRole(null);
-    setShowLanding(true);
     setNotifications([]);
   };
 
@@ -136,11 +125,6 @@ const App: React.FC = () => {
   };
 
   const renderView = () => {
-    // Show landing page first
-    if (showLanding) {
-      return <LandingPage onGetStarted={() => setShowLanding(false)} />;
-    }
-
     switch (currentRole) {
       case UserRole.PASSENGER:
         return (
@@ -163,7 +147,7 @@ const App: React.FC = () => {
             surge={surge}
             dailyEarnings={driverDailyEarnings}
             history={driverHistory}
-            // Filter withdrawals for the current driver
+            // Filter withdrawals for the current driver to display history
             withdrawals={withdrawalRequests.filter(w => w.driverId === driverData.id)}
             onRideComplete={handleDriverRideComplete}
             onWithdraw={handleDriverWithdraw}
@@ -201,8 +185,8 @@ const App: React.FC = () => {
     <div className="font-sans text-gray-900 relative">
       <ToastContainer notifications={notifications} onDismiss={dismissNotification} />
       {renderView()}
-      {/* Show AI Chat Widget for Passengers only (not on landing page) */}
-      {currentRole === UserRole.PASSENGER && !showLanding && (
+      {/* Show AI Chat Widget for Passengers and Guests */}
+      {(currentRole === UserRole.PASSENGER || currentRole === null) && (
         <ChatWidget />
       )}
     </div>
