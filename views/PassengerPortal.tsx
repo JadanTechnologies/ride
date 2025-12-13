@@ -500,7 +500,7 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
                             <p className="text-gray-500 text-sm mt-1">Finding the nearest available driver</p>
                         </div>
                         <div className="w-full pt-4">
-                            <Button variant="danger" className="w-full bg-red-50 text-red-600 hover:bg-red-100 border-none shadow-none" onClick={handleCancelRide}>
+                            <Button variant="danger" className="w-full py-3 text-lg font-bold shadow-md" onClick={handleCancelRide}>
                                 Cancel Request
                             </Button>
                         </div>
@@ -595,7 +595,7 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
                             )}
 
                             {tripStatus === 'arriving' && (
-                                <Button variant="danger" className="w-full bg-red-50 text-red-600 hover:bg-red-100 border-none shadow-none" onClick={handleCancelRide}>
+                                <Button variant="danger" className="w-full py-3 text-lg font-bold shadow-md" onClick={handleCancelRide}>
                                     Cancel Ride
                                 </Button>
                             )}
