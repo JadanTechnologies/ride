@@ -7,8 +7,8 @@ import { VEHICLE_ICONS, CURRENCY, LAGOS_COORDS } from '../constants';
 import { Button } from '../components/Button';
 import { estimateTripDetails } from '../services/geminiService';
 
-// Fix for Leaflet import in ESM environments
-const Leaflet = (L as any).default ?? L;
+// Robust fix for Leaflet import in various ESM environments
+const Leaflet = (L as any).default || L;
 
 interface PassengerPortalProps {
   user: any;
@@ -24,7 +24,7 @@ type TripStatus = 'searching' | 'arriving' | 'arrived' | 'in_progress' | 'comple
 
 // Custom Icons for Map
 const createMapIcon = (type: 'user' | 'keke' | 'okada' | 'bus' | 'destination', rotation = 0) => {
-    if (!Leaflet || !Leaflet.divIcon) return undefined;
+    if (!Leaflet || !Leaflet.divIcon) return null;
 
     let color = '#10b981';
     let iconHtml = '';
@@ -43,20 +43,25 @@ const createMapIcon = (type: 'user' | 'keke' | 'okada' | 'bus' | 'destination', 
       `<div style="position: absolute; top: -4px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-bottom: 6px solid ${color};"></div>` 
       : '';
 
-    return Leaflet.divIcon({
-      className: 'custom-icon',
-      html: `
-        <div style="position: relative; width: 36px; height: 36px; transform: rotate(${rotation}deg); transition: transform 0.5s linear;">
-            ${pointerHtml}
-            <div style="background-color: ${color}; width: 100%; height: 100%; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3); border: 2px solid white; transform: rotate(-${rotation}deg);">
-                ${iconHtml}
+    try {
+        return Leaflet.divIcon({
+          className: 'custom-icon',
+          html: `
+            <div style="position: relative; width: 36px; height: 36px; transform: rotate(${rotation}deg); transition: transform 0.5s linear;">
+                ${pointerHtml}
+                <div style="background-color: ${color}; width: 100%; height: 100%; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3); border: 2px solid white; transform: rotate(-${rotation}deg);">
+                    ${iconHtml}
+                </div>
             </div>
-        </div>
-      `,
-      iconSize: [36, 36],
-      iconAnchor: [18, 18],
-      popupAnchor: [0, -20]
-    });
+          `,
+          iconSize: [36, 36],
+          iconAnchor: [18, 18],
+          popupAnchor: [0, -20]
+        });
+    } catch (e) {
+        console.error("Error creating icon", e);
+        return null;
+    }
 };
 
 const MapComponent = ({ userLocation, drivers, assignedDriver, destination }) => {
@@ -89,7 +94,6 @@ const MapComponent = ({ userLocation, drivers, assignedDriver, destination }) =>
                 </Marker>
             )}
             
-            {/* Show Assigned Driver */}
             {assignedDriver && !isNaN(assignedDriver.lat) && (
                 <Marker 
                     position={[assignedDriver.lat, assignedDriver.lng]} 
@@ -99,7 +103,6 @@ const MapComponent = ({ userLocation, drivers, assignedDriver, destination }) =>
                 </Marker>
             )}
 
-            {/* Show Nearby Drivers (if no assigned driver) */}
             {!assignedDriver && drivers.map((d: any) => {
                 const icon = createMapIcon(d.type.toLowerCase(), d.heading);
                 if (!icon) return null;
@@ -115,7 +118,6 @@ const MapComponent = ({ userLocation, drivers, assignedDriver, destination }) =>
                 );
             })}
 
-            {/* Destination Marker */}
             {destination && !isNaN(destination.lat) && destIcon && (
                 <Marker position={[destination.lat, destination.lng]} icon={destIcon}>
                     <Popup>Destination</Popup>
@@ -133,30 +135,24 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
   const [viewState, setViewState] = useState<'booking' | 'trip' | 'history' | 'wallet'>('booking');
   const [bookingStep, setBookingStep] = useState<'input' | 'estimating' | 'confirm'>('input');
   
-  // Trip State
   const [tripStatus, setTripStatus] = useState<TripStatus>('searching');
   const [estimatedRide, setEstimatedRide] = useState<Partial<Ride> | null>(null);
   const [tripProgress, setTripProgress] = useState(0);
 
-  // Map Data State
   const [userLocation] = useState(user?.location || LAGOS_COORDS);
   const [destinationLocation, setDestinationLocation] = useState<any>(null);
   const [nearbyDrivers, setNearbyDrivers] = useState<any[]>([]);
   const [assignedDriverPos, setAssignedDriverPos] = useState<any>(null);
 
-  // Data State
   const [walletBalance, setWalletBalance] = useState(user?.walletBalance || 0);
 
-  // Simulation Refs
   const rideTimers = useRef<any[]>([]);
   const progressInterval = useRef<any>(null);
 
-  // Generate initial fake drivers around user
   useEffect(() => {
     if (!userLocation) return;
     
     const types = ['Keke', 'Okada', 'Bus'];
-    // Generate more drivers (8) with heading data
     const fakeDrivers = Array.from({length: 8}).map((_, i) => ({
         id: i,
         lat: userLocation.lat + (Math.random() - 0.5) * 0.02,
@@ -167,14 +163,10 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
     }));
     setNearbyDrivers(fakeDrivers);
 
-    // Simulate movement with bearing
     const interval = setInterval(() => {
         setNearbyDrivers(prev => prev.map(d => {
-             // Wiggle heading
              const headingChange = (Math.random() - 0.5) * 30;
              const newHeading = (d.heading + headingChange + 360) % 360;
-             
-             // Move based on heading
              const rad = newHeading * (Math.PI / 180);
              const newLat = d.lat + Math.cos(rad) * d.speed;
              const newLng = d.lng + Math.sin(rad) * d.speed;
@@ -190,14 +182,12 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
     return () => clearInterval(interval);
   }, [userLocation]);
 
-  // Sync wallet balance when user prop changes
   useEffect(() => {
     if (user) {
         setWalletBalance(user.walletBalance);
     }
   }, [user]);
 
-  // Cleanup timers on unmount
   useEffect(() => {
     return () => clearSimulation();
   }, []);
@@ -215,14 +205,12 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
     if (!pickup || !dropoff) return;
     setBookingStep('estimating');
     
-    // Simulate finding destination coords (random offset from user)
     setDestinationLocation({
         lat: userLocation.lat + 0.02,
         lng: userLocation.lng + 0.02
     });
 
     const details = await estimateTripDetails(pickup, dropoff);
-    
     const dist = details?.distance || "6.5 km";
     const dur = details?.duration || "25 mins";
     const distVal = parseFloat(dist.split(' ')[0]) || 5;
@@ -249,7 +237,6 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
     setTripProgress(0);
     clearSimulation();
     
-    // Initialize assigned driver
     const driverStartPos = {
         lat: userLocation.lat - 0.005,
         lng: userLocation.lng - 0.005,
@@ -258,7 +245,6 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
     };
     setAssignedDriverPos(null);
 
-    // Simulation of ride lifecycle
     const t1 = setTimeout(() => {
         setTripStatus('arriving');
         setAssignedDriverPos(driverStartPos); 
@@ -272,7 +258,6 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
     
     const t3 = setTimeout(() => {
         setTripStatus('in_progress');
-        // Simulate progress bar and movement
         let progress = 0;
         if (progressInterval.current) clearInterval(progressInterval.current);
         
@@ -284,7 +269,6 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
                 if(!prev || !destinationLocation) return prev;
                 const latDiff = destinationLocation.lat - userLocation.lat;
                 const lngDiff = destinationLocation.lng - userLocation.lng;
-                
                 const angleRad = Math.atan2(lngDiff, latDiff);
                 const angleDeg = (angleRad * 180 / Math.PI + 360) % 360;
 
@@ -346,9 +330,10 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
     onNotify('success', "Ride details copied to clipboard!");
   };
 
+  if (!Leaflet) return <div className="flex items-center justify-center h-full">Loading Maps...</div>;
+
   return (
     <div className="relative h-screen w-full flex flex-col md:flex-row overflow-hidden bg-gray-100">
-      {/* Sidebar */}
       <div className="absolute top-0 left-0 w-full md:w-auto p-4 z-20 flex justify-between items-start pointer-events-none md:pointer-events-auto">
         <button className="bg-white p-2 rounded-full shadow-lg pointer-events-auto md:hidden">
           <Menu className="w-6 h-6" />
@@ -378,10 +363,9 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
         </div>
       </div>
 
-      {/* Map Area */}
       <div className="flex-1 relative h-full z-0">
          {userLocation && !isNaN(userLocation.lat) ? (
-             <MapContainer center={[userLocation.lat, userLocation.lng]} zoom={14} style={{ height: '100%', width: '100%' }} zoomControl={false}>
+             <MapContainer key={`${userLocation.lat}-${userLocation.lng}`} center={[userLocation.lat, userLocation.lng]} zoom={14} style={{ height: '100%', width: '100%' }} zoomControl={false}>
                 <MapComponent 
                     userLocation={userLocation} 
                     drivers={nearbyDrivers} 
@@ -396,10 +380,7 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
          )}
       </div>
 
-      {/* Interface Panels */}
       <div className="absolute bottom-0 md:top-4 md:right-4 md:bottom-auto w-full md:w-[420px] z-30 transition-all duration-300">
-        
-        {/* Booking Flow */}
         {viewState === 'booking' && (
             <div className="bg-white md:rounded-2xl shadow-2xl p-6 max-h-[85vh] overflow-y-auto">
                 {bookingStep === 'input' && (
@@ -496,7 +477,7 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
             </div>
         )}
 
-        {/* Trip View */}
+        {/* ... Rest of components (trip, history, wallet) identical to previous input ... */}
         {viewState === 'trip' && (
              <div className="bg-white md:rounded-2xl shadow-2xl overflow-hidden">
                 {tripStatus === 'searching' && (
@@ -606,7 +587,6 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
                     </div>
                 )}
                 
-                {/* Completed View */}
                 {tripStatus === 'completed' && (
                     <div className="p-8 text-center animate-in zoom-in duration-300">
                         <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -627,7 +607,6 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
              </div>
         )}
 
-        {/* History & Wallet Overlays */}
         {viewState === 'history' && (
              <div className="bg-white md:rounded-2xl shadow-2xl h-[600px] flex flex-col">
                 <div className="p-4 border-b border-gray-100 flex justify-between items-center">
