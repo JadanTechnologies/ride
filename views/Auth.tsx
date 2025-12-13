@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { UserRole, VehicleType } from '../types';
 import { Button } from '../components/Button';
-import { Truck, Globe, Upload, Check, User, Mail, Lock, Phone, Bike, Bus } from 'lucide-react';
-import { APP_NAME, VEHICLE_ICONS } from '../constants';
+import { Truck, Globe, Upload, Check, User, Mail, Lock, Phone, Bike, Bus, Key, Sparkles } from 'lucide-react';
+import { APP_NAME } from '../constants';
 
 interface AuthProps {
   onLogin: (role: UserRole, userData?: { name: string; email: string; phone: string; vehicleType?: VehicleType; status?: string }) => void;
@@ -48,6 +48,19 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     }, 1500);
   };
 
+  const fillDemoCredentials = (roleType: UserRole) => {
+      setRole(roleType);
+      setView('login');
+      setPassword('password');
+      if (roleType === UserRole.PASSENGER) {
+          setEmail('chioma@example.com');
+      } else if (roleType === UserRole.DRIVER) {
+          setEmail('driver@example.com');
+      } else {
+          setEmail('admin@example.com');
+      }
+  };
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files && e.target.files[0]) {
           setUploadedDoc(e.target.files[0].name);
@@ -77,9 +90,29 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 relative">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 relative overflow-hidden">
        
-       <div className="absolute top-4 right-4 z-10">
+       {/* Styles for Hologram Animation */}
+       <style>{`
+          .perspective-1000 { perspective: 1000px; }
+          .transform-style-3d { transform-style: preserve-3d; }
+          .animate-rotate-3d { animation: rotate3d 10s infinite linear; }
+          @keyframes rotate3d {
+            from { transform: rotateY(0deg); }
+            to { transform: rotateY(360deg); }
+          }
+          .hologram-item {
+             position: absolute;
+             width: 100%;
+             height: 100%;
+             backface-visibility: hidden;
+          }
+          .neon-glow {
+             filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.8)) drop-shadow(0 0 20px rgba(16, 185, 129, 0.6));
+          }
+       `}</style>
+
+       <div className="absolute top-4 right-4 z-20">
           <div className="relative group">
               <button className="flex items-center gap-2 px-3 py-2 bg-white rounded-full shadow-sm text-sm font-medium text-gray-600 hover:bg-gray-50 border border-gray-100">
                   <Globe size={16} /> {language}
@@ -98,17 +131,35 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
           </div>
        </div>
 
-       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden transition-all duration-500">
-          <div className="bg-brand-600 p-8 text-center relative overflow-hidden">
-             {/* Decorative circles */}
-             <div className="absolute top-0 left-0 w-32 h-32 bg-white opacity-10 rounded-full -translate-x-10 -translate-y-10"></div>
-             <div className="absolute bottom-0 right-0 w-24 h-24 bg-white opacity-10 rounded-full translate-x-10 translate-y-10"></div>
-             
-             <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg relative z-10">
-                <Truck className="w-8 h-8 text-brand-600" />
+       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden transition-all duration-500 z-10">
+          {/* Enhanced Holographic Landing Header */}
+          <div className="bg-slate-900 p-10 text-center relative overflow-hidden">
+             {/* 3D Stage */}
+             <div className="perspective-1000 w-32 h-32 mx-auto mb-6 relative">
+                 <div className="w-full h-full relative transform-style-3d animate-rotate-3d">
+                    {/* Center Glow */}
+                    <div className="absolute inset-0 bg-brand-500/20 rounded-full blur-xl transform translate-z-[-20px]"></div>
+                    
+                    {/* Floating Icons positioned in 3D circle */}
+                    <div className="absolute inset-0 flex items-center justify-center transform translate-z-[60px]" style={{ transform: 'rotateY(0deg) translateZ(60px)' }}>
+                       <Truck className="w-12 h-12 text-brand-400 neon-glow" />
+                    </div>
+                    <div className="absolute inset-0 flex items-center justify-center transform translate-z-[60px]" style={{ transform: 'rotateY(120deg) translateZ(60px)' }}>
+                       <Bike className="w-12 h-12 text-cyan-400 neon-glow" />
+                    </div>
+                    <div className="absolute inset-0 flex items-center justify-center transform translate-z-[60px]" style={{ transform: 'rotateY(240deg) translateZ(60px)' }}>
+                       <Bus className="w-12 h-12 text-fuchsia-400 neon-glow" />
+                    </div>
+                 </div>
+                 
+                 {/* Hologram Base */}
+                 <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 w-32 h-8 bg-brand-500/30 rounded-[100%] blur-md"></div>
              </div>
-             <h1 className="text-3xl font-bold text-white mb-2 relative z-10">{APP_NAME}</h1>
-             <p className="text-brand-100 relative z-10 font-medium">
+
+             <h1 className="text-3xl font-bold text-white mb-2 relative z-10 flex items-center justify-center gap-2">
+               {APP_NAME} <Sparkles size={20} className="text-yellow-400 animate-pulse" />
+             </h1>
+             <p className="text-brand-200 relative z-10 font-medium">
                  {getWelcomeText()}
              </p>
           </div>
@@ -235,6 +286,18 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                         Already have an account? <button onClick={() => setView('login')} className="text-brand-600 font-bold hover:underline">Log In</button>
                     </p>
                  )}
+             </div>
+
+             {/* Demo Credentials Helper */}
+             <div className="mt-8 pt-6 border-t border-gray-100">
+                 <p className="text-xs text-center text-gray-400 mb-3 flex items-center justify-center gap-1">
+                     <Key size={12} /> QUICK ACCESS (DEMO ONLY)
+                 </p>
+                 <div className="flex justify-center gap-2">
+                     <button onClick={() => fillDemoCredentials(UserRole.PASSENGER)} className="px-2 py-1 text-[10px] bg-blue-50 text-blue-600 rounded hover:bg-blue-100 font-medium transition-colors">Passenger</button>
+                     <button onClick={() => fillDemoCredentials(UserRole.DRIVER)} className="px-2 py-1 text-[10px] bg-green-50 text-green-600 rounded hover:bg-green-100 font-medium transition-colors">Driver</button>
+                     <button onClick={() => fillDemoCredentials(UserRole.ADMIN)} className="px-2 py-1 text-[10px] bg-purple-50 text-purple-600 rounded hover:bg-purple-100 font-medium transition-colors">Admin</button>
+                 </div>
              </div>
           </div>
        </div>

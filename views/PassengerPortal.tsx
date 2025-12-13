@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Navigation, Clock, CreditCard, Star, Menu, Phone, MessageSquare, X, CheckCircle, Wallet, Plus, Zap, Share2 } from 'lucide-react';
+import { MapPin, Navigation, Clock, CreditCard, Star, Menu, Phone, MessageSquare, X, CheckCircle, Wallet, Plus, Zap, Share2, Timer, Map } from 'lucide-react';
 import { Ride, VehicleType } from '../types';
 import { VEHICLE_ICONS, CURRENCY } from '../constants';
 import { Button } from '../components/Button';
@@ -319,12 +319,34 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
                              <p className="text-center text-slate-400 text-sm">
                                 {tripStatus === 'arriving' && '3 mins away'}
                                 {tripStatus === 'arrived' && 'Please meet at pickup'}
-                                {tripStatus === 'in_progress' && `Arriving in ${Math.max(1, 15 - Math.floor(tripProgress / 7))} mins`}
+                                {tripStatus === 'in_progress' && 'Sit back and relax'}
                              </p>
                         </div>
                         
                         {/* Driver Details */}
                         <div className="p-6">
+                            {/* NEW: ETA Display for In Progress */}
+                            {tripStatus === 'in_progress' && (
+                                <div className="bg-brand-50 border border-brand-100 p-4 rounded-xl mb-6 flex items-center justify-between shadow-sm animate-in zoom-in duration-300">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-brand-100 text-brand-700 rounded-full">
+                                            <Timer size={24} />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-brand-600 font-bold uppercase tracking-wider">Estimated Arrival</p>
+                                            <p className="text-2xl font-bold text-brand-900">{Math.max(1, 15 - Math.floor(tripProgress / 7))} mins</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="flex items-center justify-end gap-1 text-gray-500 mb-1">
+                                            <Map size={14} />
+                                            <span className="text-xs">Distance Left</span>
+                                        </div>
+                                        <p className="font-bold text-gray-800 text-lg">{(2.4 * (1 - tripProgress/100)).toFixed(1)} km</p>
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="flex items-center gap-4 mb-6">
                                 <img src="https://picsum.photos/200/200?random=2" alt="Driver" className="w-16 h-16 rounded-full object-cover ring-2 ring-brand-100" />
                                 <div className="flex-1">
