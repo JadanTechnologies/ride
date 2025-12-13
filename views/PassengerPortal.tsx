@@ -665,6 +665,6 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
             </div>
         )}
       </div>
-    </div>
+    </>
   );
 };

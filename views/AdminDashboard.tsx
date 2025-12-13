@@ -13,6 +13,7 @@ import AdminMapView from '../components/AdminMapView';
 import DeviceTracking from '../components/DeviceTracking';
 import AppManagement from '../components/AppManagement';
 import SupportManagement from '../components/SupportManagement';
+import UserManagement from '../components/UserManagement';
 
 // Fix for Leaflet import in ESM environments
 const Leaflet = (L as any).default ?? L;
@@ -78,7 +79,7 @@ const createIcon = (type: VehicleType | 'USER') => {
   });
 };
 
-type AdminView = 'overview' | 'map' | 'drivers' | 'users' | 'rides' | 'disputes' | 'finance' | 'settings' | 'devices' | 'apps' | 'support' | 'fraud';
+type AdminView = 'overview' | 'map' | 'drivers' | 'users' | 'rides' | 'disputes' | 'finance' | 'settings' | 'devices' | 'apps' | 'support' | 'fraud' | 'usermanagement';
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ 
   currentPricing, 
@@ -461,6 +462,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
         );
 
+      case 'usermanagement':
+        return <UserManagement />;
+
       default: // Overview
         return (
           <>
@@ -496,6 +500,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 { id: 'rides', icon: Truck, label: 'Rides' },
                 { id: 'drivers', icon: Briefcase, label: 'Drivers' },
                 { id: 'users', icon: Users, label: 'Users' },
+                { id: 'usermanagement', icon: UserPlus, label: 'User Management' },
                 { id: 'disputes', icon: AlertCircle, label: 'Disputes' },
                 { id: 'finance', icon: DollarSign, label: 'Finance' },
                 { id: 'devices', icon: Smartphone, label: 'Device Tracking' },
