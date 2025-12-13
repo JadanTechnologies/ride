@@ -4,11 +4,15 @@ import {
 } from 'recharts';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import * as L from 'leaflet';
-import { Users, Truck, DollarSign, Activity, AlertCircle, Settings, Check, X, Shield, Search, MoreVertical, ArrowUpRight, Zap, Ban, Map as MapIcon, Send, UserPlus, Briefcase, Bike, Bus } from 'lucide-react';
+import { Users, Truck, DollarSign, Activity, AlertCircle, Settings, Check, X, Shield, Search, MoreVertical, ArrowUpRight, Zap, Ban, Map as MapIcon, Send, UserPlus, Briefcase, Bike, Bus, Smartphone, Wrench, MessageSquare, AlertTriangle } from 'lucide-react';
 import { CURRENCY, LAGOS_COORDS } from '../constants';
 import { Button } from '../components/Button';
 import { User, Driver, WithdrawalRequest, VehicleType } from '../types';
 import AdminSettingsPanel from '../components/AdminSettingsPanel';
+import AdminMapView from '../components/AdminMapView';
+import DeviceTracking from '../components/DeviceTracking';
+import AppManagement from '../components/AppManagement';
+import SupportManagement from '../components/SupportManagement';
 
 // Fix for Leaflet import in ESM environments
 const Leaflet = (L as any).default ?? L;
@@ -74,7 +78,7 @@ const createIcon = (type: VehicleType | 'USER') => {
   });
 };
 
-type AdminView = 'overview' | 'map' | 'drivers' | 'users' | 'rides' | 'disputes' | 'finance' | 'settings';
+type AdminView = 'overview' | 'map' | 'drivers' | 'users' | 'rides' | 'disputes' | 'finance' | 'settings' | 'devices' | 'apps' | 'support' | 'fraud';
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ 
   currentPricing, 
@@ -260,77 +264,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     switch(currentView) {
       case 'map':
         return (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden h-[80vh] relative z-0">
-             <MapContainer center={[LAGOS_COORDS.lat, LAGOS_COORDS.lng]} zoom={13} style={{ height: '100%', width: '100%' }}>
-                <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-                
-                {/* Driver Markers */}
-                {drivers.map(d => {
-                  const icon = createIcon(d.vehicle === 'Keke' ? VehicleType.KEKE : d.vehicle === 'Okada' ? VehicleType.OKADA : VehicleType.BUS);
-                  if (!icon) return null;
-                  return (
-                    <Marker 
-                        key={`driver-${d.id}`} 
-                        position={[d.location.lat, d.location.lng]}
-                        icon={icon}
-                    >
-                        <Popup>
-                        <div className="p-2">
-                            <h4 className="font-bold">{d.name}</h4>
-                            <p className="text-sm capitalize">{d.vehicle} • {d.status}</p>
-                            <p className="text-xs text-gray-500">{d.rating} ★</p>
-                        </div>
-                        </Popup>
-                    </Marker>
-                  );
-                })}
-
-                {/* User Markers (Only Active) */}
-                {users.filter(u => u.status === 'Active').map(u => {
-                  const icon = createIcon('USER');
-                  if (!icon) return null;
-                  return (
-                    <Marker 
-                        key={`user-${u.id}`} 
-                        position={[u.location.lat, u.location.lng]}
-                        icon={icon}
-                    >
-                        <Popup>
-                        <div className="p-2">
-                            <h4 className="font-bold">{u.name}</h4>
-                            <p className="text-sm">Passenger</p>
-                        </div>
-                        </Popup>
-                    </Marker>
-                  );
-                })}
-             </MapContainer>
-             
-             {/* Map Legend Overlay */}
-             <div className="absolute top-4 right-4 bg-white p-4 rounded-lg shadow-lg z-[1000] border border-gray-100">
-                <h4 className="font-bold text-gray-800 mb-2 text-sm">Live Fleet Status</h4>
-                <div className="space-y-2">
-                   <div className="flex items-center gap-2 text-xs">
-                      <div className="w-3 h-3 rounded-full bg-yellow-500"></div> Keke (Tricycle)
-                   </div>
-                   <div className="flex items-center gap-2 text-xs">
-                      <div className="w-3 h-3 rounded-full bg-red-500"></div> Okada (Bike)
-                   </div>
-                   <div className="flex items-center gap-2 text-xs">
-                      <div className="w-3 h-3 rounded-full bg-blue-500"></div> Bus
-                   </div>
-                   <div className="flex items-center gap-2 text-xs">
-                      <div className="w-3 h-3 rounded-full bg-gray-900 border border-white"></div> Active Passenger
-                   </div>
-                </div>
-                <div className="mt-4 pt-2 border-t border-gray-100">
-                    <p className="text-xs text-gray-500 font-bold">Total Active: {drivers.filter(d => d.status === 'Active').length}</p>
-                </div>
-             </div>
-          </div>
+          <AdminMapView drivers={drivers} users={users} />
         );
 
       case 'drivers':
@@ -463,6 +397,70 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       case 'settings':
         return <AdminSettingsPanel />;
 
+      case 'devices':
+        return <DeviceTracking />;
+
+      case 'apps':
+        return <AppManagement />;
+
+      case 'support':
+        return <SupportManagement />;
+
+      case 'fraud':
+        return (
+          <div className="space-y-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <AlertTriangle className="text-red-600" size={24} />
+                <h3 className="text-lg font-bold text-gray-800">Fraud Detection & Monitoring</h3>
+              </div>
+              <p className="text-gray-600 mb-4">Automated fraud detection service is running. Suspicious activities are tracked and logged automatically.</p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-red-50 border border-red-200 p-4 rounded-lg">
+                  <p className="text-sm text-red-800 font-semibold mb-1">Critical Alerts</p>
+                  <p className="text-3xl font-bold text-red-700">2</p>
+                </div>
+                <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+                  <p className="text-sm text-yellow-800 font-semibold mb-1">High Risk</p>
+                  <p className="text-3xl font-bold text-yellow-700">7</p>
+                </div>
+                <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                  <p className="text-sm text-blue-800 font-semibold mb-1">Users Suspended</p>
+                  <p className="text-3xl font-bold text-blue-700">5</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+              <h4 className="font-bold text-gray-800 mb-4">Recent Alerts</h4>
+              <div className="space-y-3">
+                {[
+                  { id: '1', user: 'User_456', type: 'Fake Booking', risk: 'CRITICAL', time: '5 min ago' },
+                  { id: '2', user: 'Driver_789', type: 'Multiple Cancellations', risk: 'HIGH', time: '20 min ago' },
+                  { id: '3', user: 'User_123', type: 'Payment Anomaly', risk: 'MEDIUM', time: '1 hour ago' }
+                ].map(alert => (
+                  <div key={alert.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                    <div className="flex-1">
+                      <p className="font-semibold text-gray-900">{alert.user}</p>
+                      <p className="text-sm text-gray-600">{alert.type}</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className={`px-3 py-1 rounded text-xs font-semibold ${
+                        alert.risk === 'CRITICAL' ? 'bg-red-100 text-red-700' :
+                        alert.risk === 'HIGH' ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-blue-100 text-blue-700'
+                      }`}>{alert.risk}</span>
+                      <span className="text-xs text-gray-500">{alert.time}</span>
+                      <button className="text-blue-600 hover:bg-blue-50 px-2 py-1 rounded">Review</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+
       default: // Overview
         return (
           <>
@@ -500,6 +498,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 { id: 'users', icon: Users, label: 'Users' },
                 { id: 'disputes', icon: AlertCircle, label: 'Disputes' },
                 { id: 'finance', icon: DollarSign, label: 'Finance' },
+                { id: 'devices', icon: Smartphone, label: 'Device Tracking' },
+                { id: 'apps', icon: Wrench, label: 'App Management' },
+                { id: 'support', icon: MessageSquare, label: 'Support' },
+                { id: 'fraud', icon: AlertTriangle, label: 'Fraud Detection' },
                 { id: 'settings', icon: Settings, label: 'Settings' }
             ].map(item => (
                 <div key={item.id} onClick={() => setCurrentView(item.id as AdminView)} className={`p-3 rounded-lg flex items-center gap-3 cursor-pointer ${currentView === item.id ? 'bg-brand-600' : 'text-gray-400 hover:bg-slate-800'}`}>

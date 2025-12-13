@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MapPin, Navigation, Clock, CreditCard, Star, Menu, Phone, MessageSquare, X, CheckCircle, Wallet, Plus, Zap, Share2, Timer, Map as MapIcon } from 'lucide-react';
+import { MapPin, Navigation, Clock, CreditCard, Star, Menu, Phone, MessageSquare, X, CheckCircle, Wallet, Plus, Zap, Share2, Timer, Map as MapIcon, History, Settings } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import * as L from 'leaflet';
 import { Ride, VehicleType } from '../types';
 import { VEHICLE_ICONS, CURRENCY, LAGOS_COORDS } from '../constants';
 import { Button } from '../components/Button';
+import CollapsibleNavBar from '../components/CollapsibleNavBar';
 import { estimateTripDetails } from '../services/geminiService';
 
 // Robust fix for Leaflet import in various ESM environments
@@ -332,38 +333,25 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
 
   if (!Leaflet) return <div className="flex items-center justify-center h-full">Loading Maps...</div>;
 
-  return (
-    <div className="relative h-screen w-full flex flex-col md:flex-row overflow-hidden bg-gray-100">
-      <div className="absolute top-0 left-0 w-full md:w-auto p-4 z-20 flex justify-between items-start pointer-events-none md:pointer-events-auto">
-        <button className="bg-white p-2 rounded-full shadow-lg pointer-events-auto md:hidden">
-          <Menu className="w-6 h-6" />
-        </button>
-        <div className="hidden md:flex flex-col gap-4 bg-white p-4 rounded-xl shadow-xl w-80 pointer-events-auto border border-gray-100">
-           <div className="flex items-center gap-3 border-b border-gray-100 pb-4">
-              <img src={user?.avatarUrl} alt="User" className="w-12 h-12 rounded-full bg-gray-200" />
-              <div>
-                <h2 className="font-bold text-gray-800">{user?.name || 'Guest'}</h2>
-                <p className="text-sm text-gray-500">{CURRENCY}{walletBalance.toLocaleString()} Wallet</p>
-              </div>
-           </div>
-           <nav className="space-y-1">
-             <button onClick={() => setViewState('booking')} className={`w-full p-3 rounded-lg flex items-center gap-3 font-medium transition-colors ${viewState === 'booking' && tripStatus === 'searching' ? 'bg-brand-50 text-brand-700' : 'text-gray-600 hover:bg-gray-50'}`}>
-                <Navigation size={20}/> Book a Ride
-             </button>
-             <button onClick={() => setViewState('history')} className={`w-full p-3 rounded-lg flex items-center gap-3 font-medium transition-colors ${viewState === 'history' ? 'bg-brand-50 text-brand-700' : 'text-gray-600 hover:bg-gray-50'}`}>
-                <Clock size={20}/> History
-             </button>
-             <button onClick={() => setViewState('wallet')} className={`w-full p-3 rounded-lg flex items-center gap-3 font-medium transition-colors ${viewState === 'wallet' ? 'bg-brand-50 text-brand-700' : 'text-gray-600 hover:bg-gray-50'}`}>
-                <CreditCard size={20}/> Payments
-             </button>
-             <button onClick={onLogout} className="w-full p-3 text-left text-red-600 hover:bg-red-50 rounded-lg font-medium mt-4">
-                Sign Out
-             </button>
-           </nav>
-        </div>
-      </div>
+  const navItems = [
+    { id: 'booking', label: 'Book a Ride', icon: <Navigation size={20} />, onClick: () => setViewState('booking') },
+    { id: 'history', label: 'History', icon: <History size={20} />, onClick: () => setViewState('history') },
+    { id: 'wallet', label: 'Wallet', icon: <Wallet size={20} />, onClick: () => setViewState('wallet') },
+    { id: 'support', label: 'Support', icon: <MessageSquare size={20} />, onClick: () => {} },
+  ];
 
-      <div className="flex-1 relative h-full z-0">
+  return (
+    <>
+      <CollapsibleNavBar
+        userName={user?.name || 'Guest'}
+        navItems={navItems}
+        onLogout={onLogout}
+        hasNotifications={false}
+      />
+
+      <div className="relative min-h-[calc(100vh-4rem)] w-full flex flex-col md:flex-row overflow-hidden bg-gray-100 md:pt-16">
+        {/* Map Section */}
+        <div className="flex-1 relative h-full z-0">
          {userLocation && !isNaN(userLocation.lat) ? (
              <MapContainer key={`${userLocation.lat}-${userLocation.lng}`} center={[userLocation.lat, userLocation.lng]} zoom={14} style={{ height: '100%', width: '100%' }} zoomControl={false}>
                 <MapComponent 

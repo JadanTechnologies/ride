@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { UserRole, VehicleType } from '../types';
 import { Button } from '../components/Button';
-import { Truck, Globe, Upload, Check, User, Mail, Lock, Phone, Bike, Bus, Key, Sparkles, MapPin, Shield, Clock, ChevronDown, ChevronUp, Facebook, Twitter, Instagram, X as XIcon, HelpCircle, ArrowRight } from 'lucide-react';
+import { Truck, Globe, Upload, Check, User, Mail, Lock, Phone, Bike, Bus, Key, Sparkles, MapPin, Shield, Clock, ChevronDown, ChevronUp, Facebook, Twitter, Instagram, X as XIcon, HelpCircle, ArrowRight, Download } from 'lucide-react';
 import { APP_NAME, CURRENCY } from '../constants';
 
 interface AuthProps {
@@ -241,6 +241,21 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                      >
                         Become a Driver
                      </button>
+                 </div>
+
+                 {/* Download App Section */}
+                 <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
+                     <a 
+                        href="/downloads/keke-app-latest.apk"
+                        download
+                        className="px-6 py-3 bg-slate-700/50 hover:bg-slate-700 text-white border border-slate-600 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors text-sm"
+                     >
+                        <Download size={18} />
+                        Download APK
+                     </a>
+                     <p className="text-slate-400 text-xs flex items-center justify-center lg:justify-start">
+                        Available on Android 8.0+ • ~45 MB
+                     </p>
                  </div>
                  
                  <div className="mt-12 flex items-center justify-center lg:justify-start gap-8 opacity-60 grayscale hover:grayscale-0 transition-all">

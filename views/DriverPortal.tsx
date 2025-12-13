@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { User, VehicleType, WithdrawalRequest } from '../types';
 import { CURRENCY, VEHICLE_ICONS, LAGOS_COORDS } from '../constants';
-import { Navigation, Wallet, Bell, Phone, MessageSquare, ArrowRight, Zap, Lock, AlertCircle, Clock, RotateCcw } from 'lucide-react';
+import { Navigation, Wallet, Bell, Phone, MessageSquare, ArrowRight, Zap, Lock, AlertCircle, Clock, RotateCcw, TrendingUp, History } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import * as L from 'leaflet';
 import { Button } from '../components/Button';
+import CollapsibleNavBar from '../components/CollapsibleNavBar';
 
 // Fix for Leaflet import in ESM environments
 const Leaflet = (L as any).default ?? L;
@@ -268,42 +269,22 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ user, pricing, commi
 
   const RequestIcon = activeRequest ? (VEHICLE_ICONS[activeRequest.vehicleType as VehicleType] || VEHICLE_ICONS.KEKE) : VEHICLE_ICONS.KEKE;
 
+  const navItems = [
+    { id: 'status', label: isOnline ? 'Go Offline' : 'Go Online', icon: <Zap size={20} />, onClick: toggleOnline },
+    { id: 'earnings', label: 'Earnings', icon: <Wallet size={20} />, onClick: () => setViewState('earnings') },
+    { id: 'history', label: 'Trip History', icon: <History size={20} />, onClick: () => setViewState('home') },
+    { id: 'support', label: 'Support', icon: <MessageSquare size={20} />, onClick: () => {} },
+  ];
+
   return (
-    <div className="h-screen bg-gray-100 flex flex-col">
-       {/* Top Bar */}
-       <header className="bg-white shadow-sm p-4 flex justify-between items-center z-30">
-          <div className="flex items-center gap-3">
-             {viewState === 'earnings' && (
-                 <button onClick={() => setViewState('home')} className="p-1 hover:bg-gray-100 rounded">
-                     <ArrowRight className="w-5 h-5 rotate-180 text-gray-600" />
-                 </button>
-             )}
-             {viewState === 'home' && (
-                 <div className={`w-3 h-3 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}></div>
-             )}
-             <h1 className="font-bold text-gray-800 text-lg flex items-center gap-2">
-                 {viewState === 'earnings' ? 'Earnings & Wallet' : (isOnline ? (rideStatus === 'idle' ? 'Online' : 'On Trip') : 'Offline')}
-                 {surge > 1 && isOnline && viewState === 'home' && (
-                   <span className="flex items-center gap-1 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full border border-purple-200">
-                     <Zap size={10} className="fill-current" /> {surge}x Surge
-                   </span>
-                 )}
-             </h1>
-          </div>
-          <div className="flex gap-4 items-center">
-             {viewState === 'home' && (
-                 <button 
-                    onClick={() => setViewState('earnings')}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-green-50 text-green-700 rounded-full text-sm font-bold hover:bg-green-100 transition-colors"
-                 >
-                    {CURRENCY}{dailyEarnings.toLocaleString()}
-                 </button>
-             )}
-             <button onClick={onLogout} className="text-sm text-gray-500 hidden md:block">Log Out</button>
-             <div className="bg-gray-100 p-2 rounded-full"><Bell className="w-6 h-6 text-gray-600"/></div>
-             <img src={user.avatarUrl} className="w-10 h-10 rounded-full border border-gray-200" alt="Profile" />
-          </div>
-       </header>
+    <>
+      <CollapsibleNavBar
+        userName={user?.name || 'Driver'}
+        navItems={navItems}
+        onLogout={onLogout}
+        hasNotifications={false}
+      />
+      <div className="relative min-h-[calc(100vh-4rem)] w-full flex flex-col md:flex-row overflow-hidden bg-gray-100 md:pt-16">
 
        {/* Main Content Area */}
        <div className="flex-1 relative overflow-hidden">
@@ -474,6 +455,7 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ user, pricing, commi
              </div>
          )}
        </div>
-    </div>
+      </div>
+    </>
   );
 };

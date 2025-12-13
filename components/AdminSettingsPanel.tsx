@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Settings, User, CreditCard, Mail, Bell, Lock, Users, Globe } from 'lucide-react';
+import { Settings, User, CreditCard, Mail, Bell, Lock, Users, Globe, Zap, Bot } from 'lucide-react';
 import BrandingSettings from './settings/BrandingSettings.tsx';
 import PaymentSettings from './settings/PaymentSettings.tsx';
 import EmailSettings from './settings/EmailSettings.tsx';
@@ -8,8 +8,9 @@ import PushNotificationSettings from './settings/PushNotificationSettings.tsx';
 import TemplateManager from './settings/TemplateManager.tsx';
 import StaffManagement from './settings/StaffManagement.tsx';
 import AccessControlSettings from './settings/AccessControlSettings.tsx';
+import AIProviderSettings from './settings/AIProviderSettings.tsx';
 
-type SettingTab = 'branding' | 'payment' | 'email' | 'sms' | 'push' | 'templates' | 'staff' | 'access' | 'monetization';
+type SettingTab = 'branding' | 'payment' | 'email' | 'sms' | 'push' | 'templates' | 'staff' | 'access' | 'monetization' | 'ai';
 
 export const AdminSettingsPanel: React.FC = () => {
   const [activeTab, setActiveTab] = useState<SettingTab>('branding');
@@ -24,6 +25,7 @@ export const AdminSettingsPanel: React.FC = () => {
     { id: 'staff' as SettingTab, label: 'Staff', icon: Users },
     { id: 'access' as SettingTab, label: 'Access Control', icon: Lock },
     { id: 'monetization' as SettingTab, label: 'Monetization', icon: CreditCard },
+    { id: 'ai' as SettingTab, label: 'AI Providers', icon: Bot },
   ];
 
   return (
@@ -69,6 +71,7 @@ export const AdminSettingsPanel: React.FC = () => {
           {activeTab === 'staff' && <StaffManagement />}
           {activeTab === 'access' && <AccessControlSettings />}
           {activeTab === 'monetization' && <MonetizationSettings />}
+          {activeTab === 'ai' && <AIProviderSettings />}
         </div>
       </div>
     </div>
