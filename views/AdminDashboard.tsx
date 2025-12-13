@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell 
 } from 'recharts';
-import { Users, Truck, DollarSign, Activity, AlertCircle, Settings, Check, X, Shield, Search, MoreVertical, ArrowUpRight, Zap, Ban, Map, Send } from 'lucide-react';
+import { Users, Truck, DollarSign, Activity, AlertCircle, Settings, Check, X, Shield, Search, MoreVertical, ArrowUpRight, Zap, Ban, Map, Send, UserPlus, Briefcase } from 'lucide-react';
 import { CURRENCY } from '../constants';
 import { Button } from '../components/Button';
 import { User, Driver, WithdrawalRequest, VehicleType } from '../types';
@@ -63,6 +63,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [currentView, setCurrentView] = useState<AdminView>('overview');
   const [broadcastInput, setBroadcastInput] = useState('');
 
+  // Recruitment State
+  const [showRecruitModal, setShowRecruitModal] = useState(false);
+  const [driverTab, setDriverTab] = useState<'active' | 'pending'>('active');
+  const [recruitForm, setRecruitForm] = useState({
+    name: '',
+    phone: '',
+    vehicle: VehicleType.KEKE,
+    plate: ''
+  });
+
   // Initialize with Mocks + Session Data
   const [drivers, setDrivers] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
@@ -75,16 +85,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         name: sessionData.driver.name + " (You)",
         vehicle: sessionData.driver.vehicleType,
         status: sessionData.driver.status || "Active",
-        rating: sessionData.driver.rating
+        rating: sessionData.driver.rating,
+        isCompany: false
     };
     
-    setDrivers([
-        sessionDriverFormatted,
-        { id: 1, name: "Ibrahim Musa", vehicle: "Keke", status: "Active", rating: 4.8 },
-        { id: 2, name: "Samuel Okon", vehicle: "Okada", status: "Pending", rating: 0 },
-        { id: 3, name: "Chinedu Eze", vehicle: "Bus", status: "Suspended", rating: 3.2 },
-        { id: 4, name: "Yusuf Ali", vehicle: "Keke", status: "Active", rating: 4.9 },
-    ]);
+    setDrivers(prev => {
+        // Simple check to avoid overwriting new recruits on re-renders for this demo
+        if (prev.length > 5) return prev;
+        return [
+            sessionDriverFormatted,
+            { id: 1, name: "Ibrahim Musa", vehicle: "Keke", status: "Active", rating: 4.8, isCompany: true },
+            { id: 2, name: "Samuel Okon", vehicle: "Okada", status: "Pending", rating: 0, isCompany: false },
+            { id: 3, name: "Chinedu Eze", vehicle: "Bus", status: "Suspended", rating: 3.2, isCompany: false },
+            { id: 4, name: "Yusuf Ali", vehicle: "Keke", status: "Active", rating: 4.9, isCompany: false },
+            { id: 5, name: "Emmanuel Bassey", vehicle: "Bus", status: "Pending", rating: 0, isCompany: false },
+        ];
+    });
 
     // Merge Session User
     const sessionUserFormatted = {
@@ -148,11 +164,33 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setDrivers(drivers.map(d => d.id === id ? { ...d, status: 'Active' } : d));
   };
 
+  const handleRejectDriver = (id: number | string) => {
+    if(confirm("Are you sure you want to reject this application?")) {
+        setDrivers(drivers.filter(d => d.id !== id));
+    }
+  };
+
   const handleSuspendDriver = (id: number | string) => {
     if (id === sessionData.driver.id) {
         onUpdateDriverStatus('Suspended');
     }
     setDrivers(drivers.map(d => d.id === id ? { ...d, status: 'Suspended' } : d));
+  };
+
+  const handleRecruitSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newDriver = {
+        id: `d-${Date.now()}`,
+        name: recruitForm.name,
+        vehicle: recruitForm.vehicle,
+        status: 'Active',
+        rating: 5.0,
+        isCompany: true
+    };
+    setDrivers(prev => [newDriver, ...prev]);
+    setShowRecruitModal(false);
+    onBroadcast(`New Company Pilot Recruited: ${recruitForm.name} (${recruitForm.vehicle})`);
+    setRecruitForm({ name: '', phone: '', vehicle: VehicleType.KEKE, plate: '' });
   };
 
   const handleDeleteUser = (id: number | string) => {
@@ -186,16 +224,40 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const renderContent = () => {
     switch(currentView) {
       case 'drivers':
+        const filteredDrivers = drivers.filter(d => {
+            if (driverTab === 'active') return d.status === 'Active' || d.status === 'Suspended';
+            return d.status === 'Pending';
+        });
+
         return (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-              <h3 className="text-lg font-bold text-gray-800">Driver Management</h3>
-              <div className="flex gap-4">
-                 <div className="relative">
+          <>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-h-[500px]">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <div>
+                  <h3 className="text-lg font-bold text-gray-800">Driver Management</h3>
+                  <div className="flex gap-4 mt-2">
+                    <button 
+                        onClick={() => setDriverTab('active')} 
+                        className={`text-sm font-medium pb-1 border-b-2 transition-colors ${driverTab === 'active' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                    >
+                        Active Fleet
+                    </button>
+                    <button 
+                        onClick={() => setDriverTab('pending')} 
+                        className={`text-sm font-medium pb-1 border-b-2 transition-colors ${driverTab === 'pending' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                    >
+                        Applications ({drivers.filter(d => d.status === 'Pending').length})
+                    </button>
+                  </div>
+              </div>
+              <div className="flex gap-4 items-center">
+                 <div className="relative hidden md:block">
                     <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
                     <input type="text" placeholder="Search drivers..." className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand-500" />
                  </div>
-                 <Button variant="primary" className="py-2 text-sm">Add Driver</Button>
+                 <Button onClick={() => setShowRecruitModal(true)} variant="primary" className="py-2 text-sm flex items-center gap-2">
+                    <UserPlus size={16} /> Recruit Driver
+                 </Button>
               </div>
             </div>
             <table className="w-full text-left">
@@ -203,40 +265,131 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <tr>
                   <th className="p-4 font-medium">Name</th>
                   <th className="p-4 font-medium">Vehicle</th>
+                  <th className="p-4 font-medium">Type</th>
                   <th className="p-4 font-medium">Status</th>
                   <th className="p-4 font-medium">Rating</th>
                   <th className="p-4 font-medium text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {drivers.map((driver) => (
-                  <tr key={driver.id} className="hover:bg-gray-50">
-                    <td className="p-4 font-medium text-gray-900">{driver.name}</td>
-                    <td className="p-4 text-gray-600 capitalize">{driver.vehicle.toLowerCase()}</td>
-                    <td className="p-4">
-                      <span className={`px-2 py-1 rounded text-xs font-bold ${
-                        driver.status === 'Active' ? 'bg-green-100 text-green-700' :
-                        driver.status === 'Pending' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-red-100 text-red-700'
-                      }`}>
-                        {driver.status}
-                      </span>
-                    </td>
-                    <td className="p-4 text-gray-600">★ {driver.rating || '-'}</td>
-                    <td className="p-4 text-right space-x-2">
-                       {driver.status === 'Pending' && (
-                         <button onClick={() => handleApproveDriver(driver.id)} className="text-green-600 hover:bg-green-50 p-1.5 rounded transition-colors" title="Approve"><Check size={18}/></button>
-                       )}
-                       {driver.status === 'Active' && (
-                         <button onClick={() => handleSuspendDriver(driver.id)} className="text-red-500 hover:bg-red-50 p-1.5 rounded transition-colors" title="Suspend"><Ban size={18}/></button>
-                       )}
-                       <button className="text-gray-400 hover:text-gray-600 p-1.5 rounded transition-colors"><MoreVertical size={18}/></button>
-                    </td>
-                  </tr>
-                ))}
+                {filteredDrivers.length === 0 ? (
+                    <tr>
+                        <td colSpan={6} className="p-8 text-center text-gray-400 italic">
+                            No drivers found in this category.
+                        </td>
+                    </tr>
+                ) : (
+                    filteredDrivers.map((driver) => (
+                    <tr key={driver.id} className="hover:bg-gray-50">
+                        <td className="p-4 font-medium text-gray-900 flex items-center gap-2">
+                            {driver.name}
+                            {driver.isCompany && <span className="bg-blue-100 text-blue-700 text-[10px] px-1.5 py-0.5 rounded border border-blue-200" title="Company Driver">STAFF</span>}
+                        </td>
+                        <td className="p-4 text-gray-600 capitalize">{driver.vehicle.toLowerCase()}</td>
+                        <td className="p-4 text-gray-500 text-sm">{driver.isCompany ? 'Company Asset' : 'Independent'}</td>
+                        <td className="p-4">
+                        <span className={`px-2 py-1 rounded text-xs font-bold ${
+                            driver.status === 'Active' ? 'bg-green-100 text-green-700' :
+                            driver.status === 'Pending' ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-red-100 text-red-700'
+                        }`}>
+                            {driver.status}
+                        </span>
+                        </td>
+                        <td className="p-4 text-gray-600">★ {driver.rating || '-'}</td>
+                        <td className="p-4 text-right space-x-2">
+                        {driver.status === 'Pending' && (
+                            <>
+                                <button onClick={() => handleApproveDriver(driver.id)} className="text-green-600 hover:bg-green-50 p-1.5 rounded transition-colors" title="Approve"><Check size={18}/></button>
+                                <button onClick={() => handleRejectDriver(driver.id)} className="text-red-500 hover:bg-red-50 p-1.5 rounded transition-colors" title="Reject"><X size={18}/></button>
+                            </>
+                        )}
+                        {driver.status === 'Active' && (
+                            <button onClick={() => handleSuspendDriver(driver.id)} className="text-red-500 hover:bg-red-50 p-1.5 rounded transition-colors" title="Suspend"><Ban size={18}/></button>
+                        )}
+                        <button className="text-gray-400 hover:text-gray-600 p-1.5 rounded transition-colors"><MoreVertical size={18}/></button>
+                        </td>
+                    </tr>
+                    ))
+                )}
               </tbody>
             </table>
           </div>
+
+          {/* Recruit Modal */}
+          {showRecruitModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
+                  <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 animate-in zoom-in-95">
+                      <div className="flex justify-between items-center mb-6">
+                          <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                              <Briefcase className="text-brand-600" /> Recruit Company Driver
+                          </h3>
+                          <button onClick={() => setShowRecruitModal(false)} className="p-2 hover:bg-gray-100 rounded-full"><X size={20} /></button>
+                      </div>
+                      
+                      <form onSubmit={handleRecruitSubmit} className="space-y-4">
+                          <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                              <input 
+                                required
+                                type="text" 
+                                value={recruitForm.name}
+                                onChange={e => setRecruitForm({...recruitForm, name: e.target.value})}
+                                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
+                                placeholder="e.g. David Mark"
+                              />
+                          </div>
+                          <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                              <input 
+                                required
+                                type="tel" 
+                                value={recruitForm.phone}
+                                onChange={e => setRecruitForm({...recruitForm, phone: e.target.value})}
+                                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
+                                placeholder="080..."
+                              />
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle Type</label>
+                                <select 
+                                    value={recruitForm.vehicle}
+                                    onChange={e => setRecruitForm({...recruitForm, vehicle: e.target.value as VehicleType})}
+                                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
+                                >
+                                    <option value={VehicleType.KEKE}>Keke (Tricycle)</option>
+                                    <option value={VehicleType.OKADA}>Okada (Bike)</option>
+                                    <option value={VehicleType.BUS}>Bus</option>
+                                </select>
+                              </div>
+                              <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle Plate</label>
+                                  <input 
+                                    required
+                                    type="text" 
+                                    value={recruitForm.plate}
+                                    onChange={e => setRecruitForm({...recruitForm, plate: e.target.value})}
+                                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
+                                    placeholder="LAG-123-XY"
+                                  />
+                              </div>
+                          </div>
+                          
+                          <div className="bg-blue-50 p-3 rounded-lg text-blue-800 text-xs flex items-start gap-2">
+                             <Shield size={14} className="mt-0.5 shrink-0" />
+                             <p>Company drivers are automatically approved and verified. They will appear in the "Active Fleet" tab immediately.</p>
+                          </div>
+
+                          <div className="flex gap-3 pt-2">
+                              <Button type="button" variant="secondary" className="flex-1" onClick={() => setShowRecruitModal(false)}>Cancel</Button>
+                              <Button type="submit" className="flex-1">Recruit Driver</Button>
+                          </div>
+                      </form>
+                  </div>
+              </div>
+          )}
+          </>
         );
 
       case 'users':

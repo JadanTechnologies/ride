@@ -427,7 +427,8 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                    </div>
                </div>
                <div className="border-t border-slate-800 pt-8 text-center text-xs">
-                   &copy; {new Date().getFullYear()} {APP_NAME}. All rights reserved.
+                   <p>&copy; {new Date().getFullYear()} {APP_NAME}. All rights reserved.</p>
+                   <p className="mt-2 text-slate-600 font-medium">Developed By Jadan Technologies</p>
                </div>
            </div>
        </footer>
