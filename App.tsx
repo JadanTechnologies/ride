@@ -5,6 +5,9 @@ import { DriverPortal } from './views/DriverPortal';
 import { AdminDashboard } from './views/AdminDashboard';
 import { ChatWidget } from './components/ChatWidget';
 import { ToastContainer } from './components/Toast';
+import { AdminSettingsPanel } from './components/AdminSettingsPanel';
+import { InAppNotificationCenter } from './components/InAppNotificationCenter';
+import { CommunicationHub } from './components/CommunicationHub';
 import { UserRole, AppNotification, VehicleType, WithdrawalRequest, Driver } from './types';
 import { MOCK_USER, MOCK_DRIVER, PRICING as DEFAULT_PRICING, DEFAULT_COMMISSION } from './constants';
 
@@ -189,6 +192,8 @@ const App: React.FC = () => {
       {(currentRole === UserRole.PASSENGER || currentRole === null) && (
         <ChatWidget />
       )}
+      {/* Show In-App Notification Center for logged-in users */}
+      {currentRole && <InAppNotificationCenter />}
     </div>
   );
 };
