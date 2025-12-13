@@ -150,7 +150,7 @@ const TemplateManager: React.FC = () => {
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Body (Use {{variable}} syntax)</label>
+              <label className="block text-sm font-medium mb-1">Body (Use {'{{'} variable{'}}'}  syntax)</label>
               <textarea 
                 value={formData.body}
                 onChange={(e) => setFormData({...formData, body: e.target.value})}
@@ -158,7 +158,7 @@ const TemplateManager: React.FC = () => {
                 rows={6}
                 className="w-full border rounded px-3 py-2"
               />
-              <p className="text-xs text-gray-600 mt-1">Example: Hi {{name}}, your order {{orderId}} is ready!</p>
+              <p className="text-xs text-gray-600 mt-1">Example: Hi {'{{'} name {'}}'} , your order {'{{'} orderId {'}}'} is ready!</p>
             </div>
             <div className="flex gap-2 pt-4 border-t">
               <button 

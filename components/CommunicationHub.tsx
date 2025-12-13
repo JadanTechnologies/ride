@@ -12,6 +12,12 @@ interface Message {
   isRead: boolean;
 }
 
+interface User {
+  id: string;
+  name: string;
+  type: 'chat' | 'sms';
+}
+
 export const CommunicationHub: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -42,8 +48,8 @@ export const CommunicationHub: React.FC = () => {
 
   const selectedConversation = messages.filter(m => m.userId === selectedUserId);
   const uniqueUsers = Array.from(new Map(
-    messages.map(m => [m.userId, { id: m.userId, name: m.senderName, type: m.type, lastMsg: m.content }])
-  ).values());
+    messages.map(m => [m.userId, { id: m.userId, name: m.senderName, type: m.type }])
+  ).values()) as User[];
 
   const handleSendReply = (type: 'chat' | 'sms') => {
     if (!replyText.trim()) return;

@@ -8,6 +8,7 @@ import { Users, Truck, DollarSign, Activity, AlertCircle, Settings, Check, X, Sh
 import { CURRENCY, LAGOS_COORDS } from '../constants';
 import { Button } from '../components/Button';
 import { User, Driver, WithdrawalRequest, VehicleType } from '../types';
+import AdminSettingsPanel from '../components/AdminSettingsPanel';
 
 // Fix for Leaflet import in ESM environments
 const Leaflet = (L as any).default ?? L;
@@ -460,17 +461,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         );
 
       case 'settings':
-        return (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-             {/* Simplified settings for brevity */}
-             <div className="flex justify-between items-center mb-6"><h3 className="text-lg font-bold text-gray-800">Platform Settings</h3></div>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div className="p-6 bg-brand-50 border border-brand-100 rounded-lg flex justify-between items-center"><div><h4 className="font-bold text-brand-900">Commission</h4><p className="text-xs text-brand-700">Fee per ride</p></div><input type="number" value={commissionForm} onChange={(e) => setCommissionForm(Number(e.target.value))} className="w-20 p-2 border rounded text-right font-bold" /></div>
-                <div className="p-6 bg-purple-50 border border-purple-100 rounded-lg flex justify-between items-center"><div><h4 className="font-bold text-purple-900">Surge Pricing</h4><p className="text-xs text-purple-700">Multiplier</p></div><input type="number" value={surgeForm} onChange={(e) => setSurgeForm(Number(e.target.value))} className="w-20 p-2 border rounded text-right font-bold" step="0.1" /></div>
-             </div>
-             <div className="flex justify-end"><Button onClick={savePricing}>Save Configuration</Button></div>
-          </div>
-        );
+        return <AdminSettingsPanel />;
 
       default: // Overview
         return (

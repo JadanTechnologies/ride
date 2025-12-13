@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Settings, User, CreditCard, Mail, Bell, Lock, Users, Globe } from 'lucide-react';
-import BrandingSettings from './settings/BrandingSettings';
-import PaymentSettings from './settings/PaymentSettings';
-import EmailSettings from './settings/EmailSettings';
-import SMSSettings from './settings/SMSSettings';
-import PushNotificationSettings from './settings/PushNotificationSettings';
-import TemplateManager from './settings/TemplateManager';
-import StaffManagement from './settings/StaffManagement';
-import AccessControlSettings from './settings/AccessControlSettings';
+import BrandingSettings from './settings/BrandingSettings.tsx';
+import PaymentSettings from './settings/PaymentSettings.tsx';
+import EmailSettings from './settings/EmailSettings.tsx';
+import SMSSettings from './settings/SMSSettings.tsx';
+import PushNotificationSettings from './settings/PushNotificationSettings.tsx';
+import TemplateManager from './settings/TemplateManager.tsx';
+import StaffManagement from './settings/StaffManagement.tsx';
+import AccessControlSettings from './settings/AccessControlSettings.tsx';
 
 type SettingTab = 'branding' | 'payment' | 'email' | 'sms' | 'push' | 'templates' | 'staff' | 'access' | 'monetization';
 
