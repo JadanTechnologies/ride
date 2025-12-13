@@ -5,6 +5,9 @@ export const APP_NAME = "Keke Napepe Ride";
 export const CURRENCY = "₦";
 export const DEFAULT_COMMISSION = 15; // 15% Platform fee
 
+// Default Center (Ikeja, Lagos)
+export const LAGOS_COORDS = { lat: 6.6018, lng: 3.3515 };
+
 // Pricing Config (Naira) with Active Status
 export const PRICING = {
   [VehicleType.KEKE]: { base: 200, perKm: 100, isActive: true },
@@ -26,6 +29,7 @@ export const MOCK_USER = {
   role: UserRole.PASSENGER,
   walletBalance: 5000,
   avatarUrl: 'https://picsum.photos/200/200',
+  location: { lat: 6.6018, lng: 3.3515 } // Ikeja
 };
 
 export const MOCK_DRIVER = {
@@ -47,4 +51,5 @@ export const MOCK_DRIVER = {
     month: 150000
   },
   avatarUrl: 'https://picsum.photos/201/201',
+  location: { lat: 6.6050, lng: 3.3550 } // Nearby
 };

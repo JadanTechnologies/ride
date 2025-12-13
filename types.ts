@@ -20,6 +20,12 @@ export enum RideStatus {
   CANCELLED = 'CANCELLED'
 }
 
+export interface Location {
+  lat: number;
+  lng: number;
+  address?: string;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -28,6 +34,7 @@ export interface User {
   role: UserRole;
   walletBalance: number;
   avatarUrl?: string;
+  location?: Location;
 }
 
 export interface Driver extends User {
@@ -37,6 +44,7 @@ export interface Driver extends User {
   rating: number;
   totalRides: number;
   status: 'Active' | 'Pending' | 'Suspended';
+  isCompany?: boolean;
   earnings: {
     today: number;
     week: number;
@@ -51,6 +59,8 @@ export interface Ride {
   vehicleType: VehicleType;
   pickupAddress: string;
   dropoffAddress: string;
+  pickupLocation?: Location;
+  dropoffLocation?: Location;
   status: RideStatus;
   fare: number;
   distance: string; // e.g., "5.2 km"

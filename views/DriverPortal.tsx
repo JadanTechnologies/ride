@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, VehicleType, WithdrawalRequest } from '../types';
-import { CURRENCY, VEHICLE_ICONS } from '../constants';
+import { CURRENCY, VEHICLE_ICONS, LAGOS_COORDS } from '../constants';
 import { Navigation, Wallet, Bell, Phone, MessageSquare, ArrowRight, Zap, Lock, AlertCircle, Clock, RotateCcw } from 'lucide-react';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
 import { Button } from '../components/Button';
 
 interface DriverPortalProps {
@@ -21,6 +23,53 @@ interface DriverPortalProps {
 type DriverRideStatus = 'idle' | 'en_route_pickup' | 'arrived_pickup' | 'in_progress' | 'completed';
 type ViewState = 'home' | 'earnings';
 
+// Custom Map Icons
+const createDriverIcon = (rotation = 0) => L.divIcon({
+  className: 'custom-icon',
+  html: `<div style="background-color: #10b981; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3); border: 3px solid white; transform: rotate(${rotation}deg)"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg></div>`,
+  iconSize: [40, 40],
+  iconAnchor: [20, 40]
+});
+
+const createPinIcon = (color: string) => L.divIcon({
+  className: 'custom-icon',
+  html: `<div style="background-color: ${color}; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3); border: 2px solid white;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></div>`,
+  iconSize: [32, 32],
+  iconAnchor: [16, 32],
+  popupAnchor: [0, -32]
+});
+
+const DriverMap = ({ position, pickup, dropoff }) => {
+    const map = useMap();
+    useEffect(() => {
+        if (position) {
+            map.flyTo([position.lat, position.lng], 15);
+        }
+    }, [position]);
+    return (
+        <>
+            <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            {position && (
+                <Marker position={[position.lat, position.lng]} icon={createDriverIcon(45)}>
+                </Marker>
+            )}
+            {pickup && (
+                <Marker position={[pickup.lat, pickup.lng]} icon={createPinIcon('#fbbf24')}>
+                    <Popup>Pickup Location</Popup>
+                </Marker>
+            )}
+            {dropoff && (
+                <Marker position={[dropoff.lat, dropoff.lng]} icon={createPinIcon('#10b981')}>
+                    <Popup>Dropoff Location</Popup>
+                </Marker>
+            )}
+        </>
+    )
+}
+
 export const DriverPortal: React.FC<DriverPortalProps> = ({ user, pricing, commissionRate, surge, dailyEarnings, history, withdrawals, onRideComplete, onWithdraw, onLogout, onNotify }) => {
   const [isOnline, setIsOnline] = useState(false);
   const [activeRequest, setActiveRequest] = useState<any | null>(null);
@@ -28,6 +77,11 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ user, pricing, commi
   const [currentRide, setCurrentRide] = useState<any | null>(null);
   const [viewState, setViewState] = useState<ViewState>('home');
   
+  // Map State
+  const [driverLocation, setDriverLocation] = useState(user.location || LAGOS_COORDS);
+  const [pickupCoords, setPickupCoords] = useState<any>(null);
+  const [dropoffCoords, setDropoffCoords] = useState<any>(null);
+
   // -- Access Control for Pending/Suspended Drivers --
   if (user.status === 'Pending') {
       return (
@@ -84,11 +138,16 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ user, pricing, commi
                 vehicleType: user.vehicleType, // Default to user's vehicle type for matching
                 avatar: 'https://picsum.photos/200/200?random=5'
             });
+            // Simulate coords
+            setPickupCoords({ lat: driverLocation.lat + 0.005, lng: driverLocation.lng + 0.005 });
+            setDropoffCoords({ lat: driverLocation.lat - 0.01, lng: driverLocation.lng - 0.01 });
             onNotify('success', "New ride request received!");
         }, 3000);
     } else {
         setActiveRequest(null);
         setCurrentRide(null);
+        setPickupCoords(null);
+        setDropoffCoords(null);
         onNotify('info', "You are now OFFLINE.");
     }
   };
@@ -108,6 +167,8 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ user, pricing, commi
     switch (rideStatus) {
       case 'en_route_pickup':
         setRideStatus('arrived_pickup');
+        // Move driver to pickup
+        setDriverLocation(pickupCoords);
         onNotify('info', "Arrived at pickup location.");
         break;
       case 'arrived_pickup':
@@ -116,6 +177,8 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ user, pricing, commi
         break;
       case 'in_progress':
         setRideStatus('completed');
+        // Move driver to dropoff
+        setDriverLocation(dropoffCoords);
         
         // Calculate earnings and update history
         const rideFare = currentRide.fare;
@@ -128,6 +191,8 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ user, pricing, commi
           // Reset after completing
           setRideStatus('idle');
           setCurrentRide(null);
+          setPickupCoords(null);
+          setDropoffCoords(null);
           // Simulate another request coming
           if (isOnline) {
              setTimeout(() => {
@@ -147,6 +212,8 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ user, pricing, commi
                     vehicleType: user.vehicleType,
                     avatar: 'https://picsum.photos/200/200?random=8'
                 });
+                setPickupCoords({ lat: driverLocation.lat + 0.003, lng: driverLocation.lng - 0.002 });
+                setDropoffCoords({ lat: driverLocation.lat - 0.008, lng: driverLocation.lng + 0.005 });
                 onNotify('success', "New ride request received!");
              }, 5000);
           }
@@ -198,13 +265,15 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ user, pricing, commi
        <div className="flex-1 relative overflow-hidden">
          {viewState === 'home' ? (
              <>
-                <div className="absolute inset-0 bg-gray-300">
-                    <div className="w-full h-full opacity-40 bg-[url('https://upload.wikimedia.org/wikipedia/commons/e/ec/Lagos_Island_OpenStreetMap.png')] bg-cover bg-center grayscale" />
+                <div className="absolute inset-0 bg-gray-300 z-0">
+                    <MapContainer center={[driverLocation.lat, driverLocation.lng]} zoom={15} style={{ height: '100%', width: '100%' }} zoomControl={false}>
+                        <DriverMap position={driverLocation} pickup={rideStatus !== 'idle' ? pickupCoords : null} dropoff={rideStatus === 'in_progress' ? dropoffCoords : null} />
+                    </MapContainer>
                 </div>
                 
                 {/* Offline / Idle State */}
                 {rideStatus === 'idle' && !activeRequest && (
-                    <div className="absolute top-6 left-1/2 transform -translate-x-1/2">
+                    <div className="absolute top-6 left-1/2 transform -translate-x-1/2 z-20">
                         <button 
                             onClick={toggleOnline}
                             className={`px-8 py-3 rounded-full font-bold shadow-xl text-lg transition-all transform hover:scale-105 ${isOnline ? 'bg-red-500 text-white' : 'bg-brand-600 text-white'}`}

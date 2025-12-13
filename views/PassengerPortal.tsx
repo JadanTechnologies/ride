@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MapPin, Navigation, Clock, CreditCard, Star, Menu, Phone, MessageSquare, X, CheckCircle, Wallet, Plus, Zap, Share2, Timer, Map } from 'lucide-react';
+import { MapPin, Navigation, Clock, CreditCard, Star, Menu, Phone, MessageSquare, X, CheckCircle, Wallet, Plus, Zap, Share2, Timer, Map as MapIcon } from 'lucide-react';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
 import { Ride, VehicleType } from '../types';
-import { VEHICLE_ICONS, CURRENCY } from '../constants';
+import { VEHICLE_ICONS, CURRENCY, LAGOS_COORDS } from '../constants';
 import { Button } from '../components/Button';
 import { estimateTripDetails } from '../services/geminiService';
 
@@ -17,6 +19,76 @@ interface PassengerPortalProps {
 
 type TripStatus = 'searching' | 'arriving' | 'arrived' | 'in_progress' | 'completed';
 
+// Custom Icons for Map
+const createMapIcon = (type: 'user' | 'keke' | 'okada' | 'bus' | 'destination', rotation = 0) => {
+    let color = '#10b981';
+    let iconHtml = '';
+
+    if (type === 'keke') { color = '#f59e0b'; iconHtml = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>'; }
+    else if (type === 'okada') { color = '#ef4444'; iconHtml = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>'; }
+    else if (type === 'bus') { color = '#3b82f6'; iconHtml = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3"/><circle cx="7" cy="18" r="2"/><path d="M9 18h5"/><circle cx="17" cy="18" r="2"/></svg>'; }
+    else if (type === 'destination') { color = '#dc2626'; iconHtml = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>'; }
+    else { // User
+      color = '#111827';
+      iconHtml = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+    }
+  
+    return L.divIcon({
+      className: 'custom-icon',
+      html: `<div style="background-color: ${color}; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3); border: 2px solid white; transform: rotate(${rotation}deg)">${iconHtml}</div>`,
+      iconSize: [32, 32],
+      iconAnchor: [16, 32],
+      popupAnchor: [0, -32]
+    });
+};
+
+const MapComponent = ({ userLocation, drivers, assignedDriver, destination }) => {
+    const map = useMap();
+    useEffect(() => {
+        if (assignedDriver) {
+             map.flyTo([assignedDriver.lat, assignedDriver.lng], 15);
+        } else if (userLocation) {
+             map.flyTo([userLocation.lat, userLocation.lng], 14);
+        }
+    }, [userLocation, assignedDriver]);
+
+    return (
+        <>
+            <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            {userLocation && (
+                <Marker position={[userLocation.lat, userLocation.lng]} icon={createMapIcon('user')}>
+                    <Popup>Your Location</Popup>
+                </Marker>
+            )}
+            
+            {/* Show Assigned Driver */}
+            {assignedDriver && (
+                <Marker position={[assignedDriver.lat, assignedDriver.lng]} icon={createMapIcon(assignedDriver.type.toLowerCase())}>
+                    <Popup>Your Driver</Popup>
+                </Marker>
+            )}
+
+            {/* Show Nearby Drivers (if no assigned driver) */}
+            {!assignedDriver && drivers.map((d: any) => (
+                <Marker key={d.id} position={[d.lat, d.lng]} icon={createMapIcon(d.type.toLowerCase())}>
+                   <Popup>{d.type} - 4 mins away</Popup>
+                </Marker>
+            ))}
+
+            {/* Destination Marker */}
+            {destination && (
+                <Marker position={[destination.lat, destination.lng]} icon={createMapIcon('destination')}>
+                    <Popup>Destination</Popup>
+                </Marker>
+            )}
+        </>
+    );
+};
+
+
 export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing, surge, history, onRideComplete, onLogout, onNotify }) => {
   const [pickup, setPickup] = useState('');
   const [dropoff, setDropoff] = useState('');
@@ -29,12 +101,40 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
   const [estimatedRide, setEstimatedRide] = useState<Partial<Ride> | null>(null);
   const [tripProgress, setTripProgress] = useState(0);
 
+  // Map Data State
+  const [userLocation] = useState(user.location || LAGOS_COORDS);
+  const [destinationLocation, setDestinationLocation] = useState<any>(null);
+  const [nearbyDrivers, setNearbyDrivers] = useState<any[]>([]);
+  const [assignedDriverPos, setAssignedDriverPos] = useState<any>(null);
+
   // Data State
   const [walletBalance, setWalletBalance] = useState(user.walletBalance);
 
   // Simulation Refs
   const rideTimers = useRef<any[]>([]);
   const progressInterval = useRef<any>(null);
+
+  // Generate initial fake drivers around user
+  useEffect(() => {
+    const types = ['Keke', 'Okada', 'Bus'];
+    const fakeDrivers = Array.from({length: 5}).map((_, i) => ({
+        id: i,
+        lat: userLocation.lat + (Math.random() - 0.5) * 0.01,
+        lng: userLocation.lng + (Math.random() - 0.5) * 0.01,
+        type: types[i % 3]
+    }));
+    setNearbyDrivers(fakeDrivers);
+
+    // Simulate idle movement
+    const interval = setInterval(() => {
+        setNearbyDrivers(prev => prev.map(d => ({
+            ...d,
+            lat: d.lat + (Math.random() - 0.5) * 0.0005,
+            lng: d.lng + (Math.random() - 0.5) * 0.0005
+        })));
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [userLocation]);
 
   // Sync wallet balance when user prop changes (e.g. after a ride)
   useEffect(() => {
@@ -55,34 +155,16 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
     }
   };
 
-  // Mock Map Background
-  const MapBackground = () => (
-    <div className="absolute inset-0 bg-gray-200 z-0 overflow-hidden">
-      <div className="w-full h-full opacity-30 bg-[url('https://upload.wikimedia.org/wikipedia/commons/e/ec/Lagos_Island_OpenStreetMap.png')] bg-cover bg-center grayscale" />
-      
-      {/* Dynamic Map Elements based on state */}
-      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-brand-600 rounded-full ring-4 ring-brand-200 animate-pulse z-10"></div>
-      
-      {viewState === 'booking' && (
-        <>
-          <div className="absolute top-1/3 left-1/4 transform rotate-45 text-gray-700"><VEHICLE_ICONS.KEKE className="w-6 h-6" /></div>
-          <div className="absolute bottom-1/3 right-1/4 transform -rotate-12 text-gray-700"><VEHICLE_ICONS.OKADA className="w-6 h-6" /></div>
-          <div className="absolute top-2/3 left-1/2 transform rotate-12 text-gray-700"><VEHICLE_ICONS.BUS className="w-6 h-6" /></div>
-        </>
-      )}
-
-      {viewState === 'trip' && tripStatus !== 'completed' && (
-         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-             <div className="w-64 h-64 border-2 border-brand-500/30 rounded-full animate-ping absolute"></div>
-         </div>
-      )}
-    </div>
-  );
-
   const handleEstimateFare = async () => {
     if (!pickup || !dropoff) return;
     setBookingStep('estimating');
     
+    // Simulate finding destination coords (random offset from user)
+    setDestinationLocation({
+        lat: userLocation.lat + 0.02,
+        lng: userLocation.lng + 0.02
+    });
+
     // Simulate AI/API delay
     const details = await estimateTripDetails(pickup, dropoff);
     
@@ -113,31 +195,53 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
     setTripProgress(0);
     clearSimulation();
     
+    // Initialize assigned driver at a random nearby spot
+    const driverStartPos = {
+        lat: userLocation.lat - 0.005,
+        lng: userLocation.lng - 0.005,
+        type: selectedVehicle || 'Keke'
+    };
+    setAssignedDriverPos(null); // Not assigned yet
+
     // Simulation of ride lifecycle
-    const t1 = setTimeout(() => setTripStatus('arriving'), 3000);
+    const t1 = setTimeout(() => {
+        setTripStatus('arriving');
+        setAssignedDriverPos(driverStartPos); // Driver Assigned
+    }, 3000);
     
     const t2 = setTimeout(() => {
         setTripStatus('arrived');
+        setAssignedDriverPos(userLocation); // Driver at User
         onNotify('info', "Your driver has arrived!");
     }, 8000);
     
     const t3 = setTimeout(() => {
         setTripStatus('in_progress');
-        // Simulate progress bar
+        // Simulate progress bar and movement to destination
         let progress = 0;
-        // Clear any existing interval
         if (progressInterval.current) clearInterval(progressInterval.current);
         
         progressInterval.current = setInterval(() => {
-            progress += 10;
+            progress += 5;
             setTripProgress(progress);
+            
+            // Move driver towards destination
+            setAssignedDriverPos((prev: any) => {
+                if(!prev || !destinationLocation) return prev;
+                return {
+                    ...prev,
+                    lat: prev.lat + (destinationLocation.lat - userLocation.lat) * 0.05,
+                    lng: prev.lng + (destinationLocation.lng - userLocation.lng) * 0.05
+                };
+            });
+
             if (progress >= 100) {
                  if(progressInterval.current) clearInterval(progressInterval.current);
             }
         }, 800);
     }, 12000);
     
-    const t4 = setTimeout(() => setTripStatus('completed'), 20000);
+    const t4 = setTimeout(() => setTripStatus('completed'), 28000);
 
     rideTimers.current = [t1, t2, t3, t4];
   };
@@ -174,6 +278,8 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
     setSelectedVehicle(null);
     setTripStatus('searching');
     setTripProgress(0);
+    setAssignedDriverPos(null);
+    setDestinationLocation(null);
   };
 
   const handleShareRide = () => {
@@ -213,8 +319,15 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
       </div>
 
       {/* Map Area */}
-      <div className="flex-1 relative h-full">
-        <MapBackground />
+      <div className="flex-1 relative h-full z-0">
+         <MapContainer center={[userLocation.lat, userLocation.lng]} zoom={14} style={{ height: '100%', width: '100%' }} zoomControl={false}>
+            <MapComponent 
+                userLocation={userLocation} 
+                drivers={nearbyDrivers} 
+                assignedDriver={assignedDriverPos} 
+                destination={destinationLocation}
+            />
+         </MapContainer>
       </div>
 
       {/* Interface Panels */}
@@ -384,7 +497,7 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
                                     </div>
                                     <div className="text-right">
                                         <div className="flex items-center justify-end gap-1 text-gray-500 mb-1">
-                                            <Map size={14} />
+                                            <MapIcon size={14} />
                                             <span className="text-xs">Distance Left</span>
                                         </div>
                                         <p className="font-bold text-gray-800 text-lg">

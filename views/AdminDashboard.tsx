@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell 
 } from 'recharts';
-import { Users, Truck, DollarSign, Activity, AlertCircle, Settings, Check, X, Shield, Search, MoreVertical, ArrowUpRight, Zap, Ban, Map, Send, UserPlus, Briefcase } from 'lucide-react';
-import { CURRENCY } from '../constants';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
+import { Users, Truck, DollarSign, Activity, AlertCircle, Settings, Check, X, Shield, Search, MoreVertical, ArrowUpRight, Zap, Ban, Map as MapIcon, Send, UserPlus, Briefcase, Bike, Bus } from 'lucide-react';
+import { CURRENCY, LAGOS_COORDS } from '../constants';
 import { Button } from '../components/Button';
 import { User, Driver, WithdrawalRequest, VehicleType } from '../types';
 
@@ -44,7 +46,29 @@ const dataVehicles = [
 
 const COLORS = ['#10b981', '#f59e0b', '#3b82f6'];
 
-type AdminView = 'overview' | 'drivers' | 'users' | 'rides' | 'disputes' | 'finance' | 'settings';
+// Custom Icons for Leaflet
+const createIcon = (type: VehicleType | 'USER') => {
+  let color = '#10b981';
+  let iconHtml = '';
+
+  if (type === VehicleType.KEKE) { color = '#f59e0b'; iconHtml = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>'; }
+  else if (type === VehicleType.OKADA) { color = '#ef4444'; iconHtml = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>'; }
+  else if (type === VehicleType.BUS) { color = '#3b82f6'; iconHtml = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3"/><circle cx="7" cy="18" r="2"/><path d="M9 18h5"/><circle cx="17" cy="18" r="2"/></svg>'; }
+  else { // User
+    color = '#111827';
+    iconHtml = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+  }
+
+  return L.divIcon({
+    className: 'custom-icon',
+    html: `<div style="background-color: ${color}; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3); border: 2px solid white;">${iconHtml}</div>`,
+    iconSize: [36, 36],
+    iconAnchor: [18, 36],
+    popupAnchor: [0, -36]
+  });
+};
+
+type AdminView = 'overview' | 'map' | 'drivers' | 'users' | 'rides' | 'disputes' | 'finance' | 'settings';
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ 
   currentPricing, 
@@ -79,6 +103,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [allRides, setAllRides] = useState<any[]>([]);
 
   useEffect(() => {
+    // Generate some random positions around Lagos for demo
+    const getRandomPos = () => ({
+      lat: LAGOS_COORDS.lat + (Math.random() - 0.5) * 0.05,
+      lng: LAGOS_COORDS.lng + (Math.random() - 0.5) * 0.05
+    });
+
     // Merge Session Driver
     const sessionDriverFormatted = {
         id: sessionData.driver.id,
@@ -86,7 +116,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         vehicle: sessionData.driver.vehicleType,
         status: sessionData.driver.status || "Active",
         rating: sessionData.driver.rating,
-        isCompany: false
+        isCompany: false,
+        location: getRandomPos()
     };
     
     setDrivers(prev => {
@@ -94,11 +125,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         if (prev.length > 5) return prev;
         return [
             sessionDriverFormatted,
-            { id: 1, name: "Ibrahim Musa", vehicle: "Keke", status: "Active", rating: 4.8, isCompany: true },
-            { id: 2, name: "Samuel Okon", vehicle: "Okada", status: "Pending", rating: 0, isCompany: false },
-            { id: 3, name: "Chinedu Eze", vehicle: "Bus", status: "Suspended", rating: 3.2, isCompany: false },
-            { id: 4, name: "Yusuf Ali", vehicle: "Keke", status: "Active", rating: 4.9, isCompany: false },
-            { id: 5, name: "Emmanuel Bassey", vehicle: "Bus", status: "Pending", rating: 0, isCompany: false },
+            { id: 1, name: "Ibrahim Musa", vehicle: "Keke", status: "Active", rating: 4.8, isCompany: true, location: getRandomPos() },
+            { id: 2, name: "Samuel Okon", vehicle: "Okada", status: "Pending", rating: 0, isCompany: false, location: getRandomPos() },
+            { id: 3, name: "Chinedu Eze", vehicle: "Bus", status: "Suspended", rating: 3.2, isCompany: false, location: getRandomPos() },
+            { id: 4, name: "Yusuf Ali", vehicle: "Keke", status: "Active", rating: 4.9, isCompany: false, location: getRandomPos() },
+            { id: 5, name: "Emmanuel Bassey", vehicle: "Bus", status: "Pending", rating: 0, isCompany: false, location: getRandomPos() },
         ];
     });
 
@@ -108,14 +139,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         name: sessionData.passenger.name + " (You)",
         email: sessionData.passenger.email,
         rides: sessionData.rides.length,
-        status: "Active"
+        status: "Active",
+        location: getRandomPos()
     };
 
     setUsers([
         sessionUserFormatted,
-        { id: 1, name: "Chioma Adebayo", email: "chioma@example.com", rides: 45, status: "Active" },
-        { id: 2, name: "John Doe", email: "john@test.com", rides: 2, status: "Active" },
-        { id: 3, name: "Sarah Smith", email: "sarah@test.com", rides: 0, status: "Inactive" },
+        { id: 1, name: "Chioma Adebayo", email: "chioma@example.com", rides: 45, status: "Active", location: getRandomPos() },
+        { id: 2, name: "John Doe", email: "john@test.com", rides: 2, status: "Active", location: getRandomPos() },
+        { id: 3, name: "Sarah Smith", email: "sarah@test.com", rides: 0, status: "Inactive", location: getRandomPos() },
     ]);
 
     // Merge Session Rides
@@ -139,6 +171,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     ]);
 
   }, [sessionData]);
+
+  // Simulate movement on the map
+  useEffect(() => {
+    if (currentView !== 'map') return;
+    
+    const interval = setInterval(() => {
+      setDrivers(prev => prev.map(d => {
+        if (d.status !== 'Active') return d;
+        // Random small movement
+        return {
+          ...d,
+          location: {
+            lat: d.location.lat + (Math.random() - 0.5) * 0.001,
+            lng: d.location.lng + (Math.random() - 0.5) * 0.001
+          }
+        };
+      }));
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [currentView]);
 
   const [disputes, setDisputes] = useState([
     { id: 'd-001', complainant: "Chioma Adebayo", respondent: "Ibrahim Musa", issue: "Driver requested extra cash", status: "Open", date: "Today, 10:30 AM" },
@@ -185,7 +238,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         vehicle: recruitForm.vehicle,
         status: 'Active',
         rating: 5.0,
-        isCompany: true
+        isCompany: true,
+        location: { lat: LAGOS_COORDS.lat + 0.01, lng: LAGOS_COORDS.lng + 0.01 }
     };
     setDrivers(prev => [newDriver, ...prev]);
     setShowRecruitModal(false);
@@ -223,6 +277,73 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const renderContent = () => {
     switch(currentView) {
+      case 'map':
+        return (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden h-[80vh] relative z-0">
+             <MapContainer center={[LAGOS_COORDS.lat, LAGOS_COORDS.lng]} zoom={13} style={{ height: '100%', width: '100%' }}>
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                
+                {/* Driver Markers */}
+                {drivers.map(d => (
+                  <Marker 
+                    key={`driver-${d.id}`} 
+                    position={[d.location.lat, d.location.lng]}
+                    icon={createIcon(d.vehicle === 'Keke' ? VehicleType.KEKE : d.vehicle === 'Okada' ? VehicleType.OKADA : VehicleType.BUS)}
+                  >
+                    <Popup>
+                      <div className="p-2">
+                        <h4 className="font-bold">{d.name}</h4>
+                        <p className="text-sm capitalize">{d.vehicle} • {d.status}</p>
+                        <p className="text-xs text-gray-500">{d.rating} ★</p>
+                      </div>
+                    </Popup>
+                  </Marker>
+                ))}
+
+                {/* User Markers (Only Active) */}
+                {users.filter(u => u.status === 'Active').map(u => (
+                  <Marker 
+                    key={`user-${u.id}`} 
+                    position={[u.location.lat, u.location.lng]}
+                    icon={createIcon('USER')}
+                  >
+                    <Popup>
+                      <div className="p-2">
+                        <h4 className="font-bold">{u.name}</h4>
+                        <p className="text-sm">Passenger</p>
+                      </div>
+                    </Popup>
+                  </Marker>
+                ))}
+             </MapContainer>
+             
+             {/* Map Legend Overlay */}
+             <div className="absolute top-4 right-4 bg-white p-4 rounded-lg shadow-lg z-[1000] border border-gray-100">
+                <h4 className="font-bold text-gray-800 mb-2 text-sm">Live Fleet Status</h4>
+                <div className="space-y-2">
+                   <div className="flex items-center gap-2 text-xs">
+                      <div className="w-3 h-3 rounded-full bg-yellow-500"></div> Keke (Tricycle)
+                   </div>
+                   <div className="flex items-center gap-2 text-xs">
+                      <div className="w-3 h-3 rounded-full bg-red-500"></div> Okada (Bike)
+                   </div>
+                   <div className="flex items-center gap-2 text-xs">
+                      <div className="w-3 h-3 rounded-full bg-blue-500"></div> Bus
+                   </div>
+                   <div className="flex items-center gap-2 text-xs">
+                      <div className="w-3 h-3 rounded-full bg-gray-900 border border-white"></div> Active Passenger
+                   </div>
+                </div>
+                <div className="mt-4 pt-2 border-t border-gray-100">
+                    <p className="text-xs text-gray-500 font-bold">Total Active: {drivers.filter(d => d.status === 'Active').length}</p>
+                </div>
+             </div>
+          </div>
+        );
+
       case 'drivers':
         const filteredDrivers = drivers.filter(d => {
             if (driverTab === 'active') return d.status === 'Active' || d.status === 'Suspended';
@@ -848,16 +969,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                <Activity size={20} /> Dashboard
             </div>
             <div 
+              onClick={() => setCurrentView('map')}
+              className={`p-3 rounded-lg flex items-center gap-3 cursor-pointer ${currentView === 'map' ? 'bg-brand-600' : 'text-gray-400 hover:bg-slate-800'}`}
+            >
+               <MapIcon size={20} /> Live Map
+            </div>
+            <div 
               onClick={() => setCurrentView('rides')}
               className={`p-3 rounded-lg flex items-center gap-3 cursor-pointer ${currentView === 'rides' ? 'bg-brand-600' : 'text-gray-400 hover:bg-slate-800'}`}
             >
-               <Map size={20} /> Rides
+               <Truck size={20} /> Rides
             </div>
             <div 
               onClick={() => setCurrentView('drivers')}
               className={`p-3 rounded-lg flex items-center gap-3 cursor-pointer ${currentView === 'drivers' ? 'bg-brand-600' : 'text-gray-400 hover:bg-slate-800'}`}
             >
-               <Truck size={20} /> Drivers
+               <Briefcase size={20} /> Drivers
             </div>
             <div 
                onClick={() => setCurrentView('users')}
@@ -898,7 +1025,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       <main className="flex-1 p-8 overflow-y-auto h-screen">
          <header className="flex justify-between items-center mb-8">
             <div>
-               <h2 className="text-2xl font-bold text-gray-800 capitalize">{currentView}</h2>
+               <h2 className="text-2xl font-bold text-gray-800 capitalize">{currentView === 'map' ? 'Live Fleet Map' : currentView}</h2>
                <p className="text-gray-500">Platform Management System</p>
             </div>
             <div className="flex gap-4">
