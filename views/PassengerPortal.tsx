@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MapPin, Navigation, Clock, CreditCard, Star, Menu, Phone, MessageSquare, X, CheckCircle, Wallet, Plus, Zap, Share2, Timer, Map } from 'lucide-react';
 import { Ride, VehicleType } from '../types';
 import { VEHICLE_ICONS, CURRENCY } from '../constants';
@@ -32,10 +32,28 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
   // Data State
   const [walletBalance, setWalletBalance] = useState(user.walletBalance);
 
+  // Simulation Refs
+  const rideTimers = useRef<any[]>([]);
+  const progressInterval = useRef<any>(null);
+
   // Sync wallet balance when user prop changes (e.g. after a ride)
   useEffect(() => {
     setWalletBalance(user.walletBalance);
   }, [user.walletBalance]);
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => clearSimulation();
+  }, []);
+
+  const clearSimulation = () => {
+    rideTimers.current.forEach(timer => clearTimeout(timer));
+    rideTimers.current = [];
+    if (progressInterval.current) {
+        clearInterval(progressInterval.current);
+        progressInterval.current = null;
+    }
+  };
 
   // Mock Map Background
   const MapBackground = () => (
@@ -92,27 +110,47 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
   const handleBookRide = () => {
     setViewState('trip');
     setTripStatus('searching');
+    setTripProgress(0);
+    clearSimulation();
     
     // Simulation of ride lifecycle
-    setTimeout(() => setTripStatus('arriving'), 3000);
-    setTimeout(() => {
+    const t1 = setTimeout(() => setTripStatus('arriving'), 3000);
+    
+    const t2 = setTimeout(() => {
         setTripStatus('arrived');
         onNotify('info', "Your driver has arrived!");
     }, 8000);
-    setTimeout(() => {
+    
+    const t3 = setTimeout(() => {
         setTripStatus('in_progress');
         // Simulate progress bar
         let progress = 0;
-        const interval = setInterval(() => {
+        // Clear any existing interval
+        if (progressInterval.current) clearInterval(progressInterval.current);
+        
+        progressInterval.current = setInterval(() => {
             progress += 10;
             setTripProgress(progress);
-            if (progress >= 100) clearInterval(interval);
+            if (progress >= 100) {
+                 if(progressInterval.current) clearInterval(progressInterval.current);
+            }
         }, 800);
     }, 12000);
-    setTimeout(() => setTripStatus('completed'), 20000);
+    
+    const t4 = setTimeout(() => setTripStatus('completed'), 20000);
+
+    rideTimers.current = [t1, t2, t3, t4];
+  };
+
+  const handleCancelRide = () => {
+      clearSimulation();
+      resetRide(false);
+      onNotify('info', "Ride request cancelled.");
   };
 
   const resetRide = (saveToHistory = false) => {
+    clearSimulation();
+    
     if (saveToHistory && estimatedRide && selectedVehicle) {
         const fare = calculateFare(selectedVehicle, estimatedRide.fare || 5);
         const newRide = {
@@ -293,7 +331,7 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
         {viewState === 'trip' && (
              <div className="bg-white md:rounded-2xl shadow-2xl overflow-hidden">
                 {tripStatus === 'searching' && (
-                    <div className="p-8 flex flex-col items-center justify-center space-y-6">
+                    <div className="p-8 flex flex-col items-center justify-center space-y-6 animate-in fade-in duration-300">
                         <div className="relative">
                             <div className="absolute inset-0 bg-brand-500 rounded-full animate-ping opacity-20"></div>
                             <div className="w-20 h-20 bg-brand-100 rounded-full flex items-center justify-center relative z-10">
@@ -303,6 +341,11 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
                         <div className="text-center">
                             <h3 className="text-lg font-bold">Connecting you...</h3>
                             <p className="text-gray-500 text-sm mt-1">Finding the nearest available driver</p>
+                        </div>
+                        <div className="w-full pt-4">
+                            <Button variant="danger" className="w-full bg-red-50 text-red-600 hover:bg-red-100 border-none shadow-none" onClick={handleCancelRide}>
+                                Cancel Request
+                            </Button>
                         </div>
                     </div>
                 )}
@@ -395,7 +438,7 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
                             )}
 
                             {tripStatus !== 'in_progress' && (
-                                <Button variant="danger" className="w-full bg-red-50 text-red-600 hover:bg-red-100 border-none shadow-none" onClick={() => resetRide(false)}>
+                                <Button variant="danger" className="w-full bg-red-50 text-red-600 hover:bg-red-100 border-none shadow-none" onClick={handleCancelRide}>
                                     Cancel Ride
                                 </Button>
                             )}
