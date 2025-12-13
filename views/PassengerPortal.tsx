@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapPin, Navigation, Clock, CreditCard, Star, Menu, Phone, MessageSquare, X, CheckCircle, Wallet, Plus, Zap, Share2, Timer, Map as MapIcon } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import * as L from 'leaflet'; // Changed to namespace import for better compatibility
+import * as L from 'leaflet';
 import { Ride, VehicleType } from '../types';
 import { VEHICLE_ICONS, CURRENCY, LAGOS_COORDS } from '../constants';
 import { Button } from '../components/Button';
 import { estimateTripDetails } from '../services/geminiService';
+
+// Fix for Leaflet import in ESM environments
+const Leaflet = (L as any).default ?? L;
 
 interface PassengerPortalProps {
   user: any;
@@ -19,9 +22,9 @@ interface PassengerPortalProps {
 
 type TripStatus = 'searching' | 'arriving' | 'arrived' | 'in_progress' | 'completed';
 
-// Custom Icons for Map - Guarded against L being undefined during initial module load
+// Custom Icons for Map
 const createMapIcon = (type: 'user' | 'keke' | 'okada' | 'bus' | 'destination', rotation = 0) => {
-    if (!L || !L.divIcon) return undefined; // Safety check
+    if (!Leaflet || !Leaflet.divIcon) return undefined;
 
     let color = '#10b981';
     let iconHtml = '';
@@ -35,13 +38,12 @@ const createMapIcon = (type: 'user' | 'keke' | 'okada' | 'bus' | 'destination', 
       iconHtml = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
     }
   
-    // Add a directional pointer for vehicles
     const isVehicle = ['keke', 'okada', 'bus'].includes(type);
     const pointerHtml = isVehicle ? 
       `<div style="position: absolute; top: -4px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-bottom: 6px solid ${color};"></div>` 
       : '';
 
-    return L.divIcon({
+    return Leaflet.divIcon({
       className: 'custom-icon',
       html: `
         <div style="position: relative; width: 32px; height: 32px; transform: rotate(${rotation}deg); transition: transform 0.5s linear;">
@@ -61,7 +63,6 @@ const MapComponent = ({ userLocation, drivers, assignedDriver, destination }) =>
     const map = useMap();
     useEffect(() => {
         if (!map) return;
-        
         try {
             if (assignedDriver && !isNaN(assignedDriver.lat) && !isNaN(assignedDriver.lng)) {
                  map.flyTo([assignedDriver.lat, assignedDriver.lng], 15);
@@ -73,40 +74,50 @@ const MapComponent = ({ userLocation, drivers, assignedDriver, destination }) =>
         }
     }, [userLocation, assignedDriver, map]);
 
+    const userIcon = createMapIcon('user');
+    const destIcon = createMapIcon('destination');
+
     return (
         <>
             <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            {userLocation && !isNaN(userLocation.lat) && (
-                <Marker position={[userLocation.lat, userLocation.lng]} icon={createMapIcon('user')}>
+            {userLocation && !isNaN(userLocation.lat) && userIcon && (
+                <Marker position={[userLocation.lat, userLocation.lng]} icon={userIcon}>
                     <Popup>Your Location</Popup>
                 </Marker>
             )}
             
             {/* Show Assigned Driver */}
             {assignedDriver && !isNaN(assignedDriver.lat) && (
-                <Marker position={[assignedDriver.lat, assignedDriver.lng]} icon={createMapIcon(assignedDriver.type.toLowerCase(), assignedDriver.heading || 0)}>
+                <Marker 
+                    position={[assignedDriver.lat, assignedDriver.lng]} 
+                    icon={createMapIcon(assignedDriver.type.toLowerCase(), assignedDriver.heading || 0) || userIcon}
+                >
                     <Popup>Your Driver</Popup>
                 </Marker>
             )}
 
             {/* Show Nearby Drivers (if no assigned driver) */}
-            {!assignedDriver && drivers.map((d: any) => (
-                <Marker key={d.id} position={[d.lat, d.lng]} icon={createMapIcon(d.type.toLowerCase(), d.heading)}>
-                   <Popup>
-                       <div className="text-center p-1">
-                           <span className="font-bold block text-sm">{d.type}</span>
-                           <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full border border-green-100">Available</span>
-                       </div>
-                   </Popup>
-                </Marker>
-            ))}
+            {!assignedDriver && drivers.map((d: any) => {
+                const icon = createMapIcon(d.type.toLowerCase(), d.heading);
+                if (!icon) return null;
+                return (
+                    <Marker key={d.id} position={[d.lat, d.lng]} icon={icon}>
+                    <Popup>
+                        <div className="text-center p-1">
+                            <span className="font-bold block text-sm">{d.type}</span>
+                            <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full border border-green-100">Available</span>
+                        </div>
+                    </Popup>
+                    </Marker>
+                );
+            })}
 
             {/* Destination Marker */}
-            {destination && !isNaN(destination.lat) && (
-                <Marker position={[destination.lat, destination.lng]} icon={createMapIcon('destination')}>
+            {destination && !isNaN(destination.lat) && destIcon && (
+                <Marker position={[destination.lat, destination.lng]} icon={destIcon}>
                     <Popup>Destination</Popup>
                 </Marker>
             )}
@@ -128,7 +139,6 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
   const [tripProgress, setTripProgress] = useState(0);
 
   // Map Data State
-  // Safety: ensure fallback if user.location is missing/undefined
   const [userLocation] = useState(user?.location || LAGOS_COORDS);
   const [destinationLocation, setDestinationLocation] = useState<any>(null);
   const [nearbyDrivers, setNearbyDrivers] = useState<any[]>([]);
@@ -166,7 +176,6 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
              
              // Move based on heading
              const rad = newHeading * (Math.PI / 180);
-             // Adjust lat/lng (simple flat earth approx for small distances)
              const newLat = d.lat + Math.cos(rad) * d.speed;
              const newLng = d.lng + Math.sin(rad) * d.speed;
 
@@ -181,7 +190,7 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
     return () => clearInterval(interval);
   }, [userLocation]);
 
-  // Sync wallet balance when user prop changes (e.g. after a ride)
+  // Sync wallet balance when user prop changes
   useEffect(() => {
     if (user) {
         setWalletBalance(user.walletBalance);
@@ -212,7 +221,6 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
         lng: userLocation.lng + 0.02
     });
 
-    // Simulate AI/API delay
     const details = await estimateTripDetails(pickup, dropoff);
     
     const dist = details?.distance || "6.5 km";
@@ -230,7 +238,6 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
   };
 
   const calculateFare = (type: VehicleType, distVal: number) => {
-    // Use dynamic pricing + surge
     const p = pricing[type];
     const basePrice = p.base + (p.perKm * distVal);
     return Math.round(basePrice * surge);
@@ -242,30 +249,30 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
     setTripProgress(0);
     clearSimulation();
     
-    // Initialize assigned driver at a random nearby spot with heading
+    // Initialize assigned driver
     const driverStartPos = {
         lat: userLocation.lat - 0.005,
         lng: userLocation.lng - 0.005,
         type: selectedVehicle || 'Keke',
         heading: 45
     };
-    setAssignedDriverPos(null); // Not assigned yet
+    setAssignedDriverPos(null);
 
     // Simulation of ride lifecycle
     const t1 = setTimeout(() => {
         setTripStatus('arriving');
-        setAssignedDriverPos(driverStartPos); // Driver Assigned
+        setAssignedDriverPos(driverStartPos); 
     }, 3000);
     
     const t2 = setTimeout(() => {
         setTripStatus('arrived');
-        setAssignedDriverPos(userLocation); // Driver at User
+        setAssignedDriverPos(userLocation);
         onNotify('info', "Your driver has arrived!");
     }, 8000);
     
     const t3 = setTimeout(() => {
         setTripStatus('in_progress');
-        // Simulate progress bar and movement to destination
+        // Simulate progress bar and movement
         let progress = 0;
         if (progressInterval.current) clearInterval(progressInterval.current);
         
@@ -273,14 +280,11 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
             progress += 5;
             setTripProgress(progress);
             
-            // Move driver towards destination
             setAssignedDriverPos((prev: any) => {
                 if(!prev || !destinationLocation) return prev;
-                // Simple interpolation towards destination
                 const latDiff = destinationLocation.lat - userLocation.lat;
                 const lngDiff = destinationLocation.lng - userLocation.lng;
                 
-                // Approximate heading towards destination
                 const angleRad = Math.atan2(lngDiff, latDiff);
                 const angleDeg = (angleRad * 180 / Math.PI + 360) % 360;
 
@@ -323,7 +327,6 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
             status: 'Completed',
             vehicle: selectedVehicle
         };
-        // Call parent handler
         onRideComplete(newRide);
         onNotify('success', `Ride completed! Paid ${CURRENCY}${fare}`);
     }
@@ -345,7 +348,7 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
 
   return (
     <div className="relative h-screen w-full flex flex-col md:flex-row overflow-hidden bg-gray-100">
-      {/* Sidebar / Mobile Menu */}
+      {/* Sidebar */}
       <div className="absolute top-0 left-0 w-full md:w-auto p-4 z-20 flex justify-between items-start pointer-events-none md:pointer-events-auto">
         <button className="bg-white p-2 rounded-full shadow-lg pointer-events-auto md:hidden">
           <Menu className="w-6 h-6" />
@@ -429,7 +432,8 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
                         </Button>
                     </div>
                 )}
-
+                
+                {/* ... (rest of the steps: estimating, confirm) - Kept same as previous but omitted for brevity if no logic changed, but since I'm outputting full file, I include them */}
                 {bookingStep === 'estimating' && (
                     <div className="py-12 flex flex-col items-center justify-center space-y-4">
                         <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
@@ -453,13 +457,9 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
 
                         <div className="space-y-3">
                             {[VehicleType.KEKE, VehicleType.OKADA, VehicleType.BUS].map((type) => {
-                            // Don't show inactive vehicle types
                             if (!pricing[type]?.isActive) return null;
-
                             const Icon = VEHICLE_ICONS[type];
-                            // Dynamic Pricing Calculation
                             const price = calculateFare(type, estimatedRide?.fare as number);
-                            
                             return (
                                 <div 
                                 key={type}
@@ -480,7 +480,6 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
                             );
                             })}
                         </div>
-
                         <div className="flex gap-4 mt-6">
                             <div className="flex-1 flex items-center gap-2 p-3 bg-gray-50 rounded-lg cursor-pointer border border-transparent hover:border-gray-200">
                                 <CreditCard className="w-5 h-5 text-gray-500"/>
@@ -490,20 +489,15 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
                                 <span className="text-sm">Promo Code</span>
                             </div>
                         </div>
-
-                        <Button 
-                        className="w-full" 
-                        disabled={!selectedVehicle} 
-                        onClick={handleBookRide}
-                        >
-                        Confirm {selectedVehicle ? selectedVehicle.toLowerCase() : 'Ride'}
+                        <Button className="w-full" disabled={!selectedVehicle} onClick={handleBookRide}>
+                            Confirm {selectedVehicle ? selectedVehicle.toLowerCase() : 'Ride'}
                         </Button>
                     </div>
                 )}
             </div>
         )}
 
-        {/* Trip View (Simulation) */}
+        {/* Trip View */}
         {viewState === 'trip' && (
              <div className="bg-white md:rounded-2xl shadow-2xl overflow-hidden">
                 {tripStatus === 'searching' && (
@@ -528,7 +522,6 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
 
                 {(tripStatus === 'arriving' || tripStatus === 'arrived' || tripStatus === 'in_progress') && (
                     <div className="animate-in slide-in-from-bottom duration-500">
-                        {/* Status Header */}
                         <div className="bg-slate-900 text-white p-4">
                              <h3 className="text-lg font-bold text-center">
                                 {tripStatus === 'arriving' && 'Driver is arriving'}
@@ -541,10 +534,7 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
                                 {tripStatus === 'in_progress' && 'Sit back and relax'}
                              </p>
                         </div>
-                        
-                        {/* Driver Details */}
                         <div className="p-6">
-                            {/* ETA Display for In Progress */}
                             {tripStatus === 'in_progress' && (
                                 <div className="bg-brand-50 border border-brand-100 p-4 rounded-xl mb-6 flex items-center justify-between shadow-sm animate-in zoom-in duration-300">
                                     <div className="flex items-center gap-3">
@@ -594,26 +584,15 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
                                     </div>
                                 </div>
                             </div>
-
                             <div className="flex gap-3 mb-6">
-                                <button className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 font-medium text-gray-700">
-                                    <Phone size={18} /> Call
-                                </button>
-                                <button className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 font-medium text-gray-700">
-                                    <MessageSquare size={18} /> Chat
-                                </button>
-                                <button onClick={handleShareRide} className="flex-none flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 font-medium text-gray-700" title="Share Ride Details">
-                                    <Share2 size={18} />
-                                </button>
+                                <button className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 font-medium text-gray-700"><Phone size={18} /> Call</button>
+                                <button className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 font-medium text-gray-700"><MessageSquare size={18} /> Chat</button>
+                                <button onClick={handleShareRide} className="flex-none flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 font-medium text-gray-700"><Share2 size={18} /></button>
                             </div>
-
                             {tripStatus === 'in_progress' && (
                                 <div className="mb-4">
                                     <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                                        <div 
-                                            className="h-full bg-brand-500 transition-all duration-1000 ease-linear"
-                                            style={{ width: `${tripProgress}%` }}
-                                        ></div>
+                                        <div className="h-full bg-brand-500 transition-all duration-1000 ease-linear" style={{ width: `${tripProgress}%` }}></div>
                                     </div>
                                     <div className="flex justify-between text-xs text-gray-400 mt-2 font-medium">
                                         <span>Pickup</span>
@@ -621,16 +600,14 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
                                     </div>
                                 </div>
                             )}
-
                             {tripStatus === 'arriving' && (
-                                <Button variant="danger" className="w-full py-3 text-lg font-bold shadow-md" onClick={handleCancelRide}>
-                                    Cancel Ride
-                                </Button>
+                                <Button variant="danger" className="w-full py-3 text-lg font-bold shadow-md" onClick={handleCancelRide}>Cancel Ride</Button>
                             )}
                         </div>
                     </div>
                 )}
-
+                
+                {/* Completed View - Kept same as previous */}
                 {tripStatus === 'completed' && (
                     <div className="p-8 text-center animate-in zoom-in duration-300">
                         <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -638,85 +615,63 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
                         </div>
                         <h2 className="text-2xl font-bold text-gray-900 mb-2">You arrived!</h2>
                         <p className="text-gray-500 mb-8">Hope you enjoyed your ride with Ibrahim.</p>
-                        
                         <div className="bg-gray-50 rounded-xl p-4 mb-8">
                             <p className="text-sm text-gray-500 mb-1">Total Fare</p>
                             <p className="text-3xl font-bold text-gray-900">{CURRENCY}{calculateFare(selectedVehicle || VehicleType.KEKE, estimatedRide?.fare || 5)}</p>
                         </div>
-
                         <div className="flex justify-center gap-2 mb-8">
-                            {[1,2,3,4,5].map(star => (
-                                <Star key={star} className="w-8 h-8 text-yellow-400 fill-current cursor-pointer hover:scale-110 transition-transform" />
-                            ))}
+                            {[1,2,3,4,5].map(star => <Star key={star} className="w-8 h-8 text-yellow-400 fill-current cursor-pointer hover:scale-110 transition-transform" />)}
                         </div>
-
                         <Button className="w-full" onClick={() => resetRide(true)}>Done</Button>
                     </div>
                 )}
              </div>
         )}
 
-        {/* History View Overlay */}
+        {/* History & Wallet Overlays - Kept same */}
         {viewState === 'history' && (
-            <div className="bg-white md:rounded-2xl shadow-2xl h-[600px] flex flex-col">
+             <div className="bg-white md:rounded-2xl shadow-2xl h-[600px] flex flex-col">
                 <div className="p-4 border-b border-gray-100 flex justify-between items-center">
                     <h3 className="font-bold text-lg">Your Trips</h3>
-                    <button onClick={() => setViewState('booking')} className="p-2 hover:bg-gray-100 rounded-full">
-                        <X size={20} />
-                    </button>
+                    <button onClick={() => setViewState('booking')} className="p-2 hover:bg-gray-100 rounded-full"><X size={20} /></button>
                 </div>
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                    {history.length === 0 ? (
-                        <div className="text-center py-10 text-gray-500">No rides yet.</div>
-                    ) : (
-                        history.map((ride) => {
-                            const Icon = VEHICLE_ICONS[ride.vehicle as VehicleType] || VEHICLE_ICONS.KEKE;
-                            return (
-                                <div key={ride.id} className="flex items-start justify-between p-4 border border-gray-100 rounded-xl hover:shadow-sm transition-shadow">
-                                    <div className="flex items-start gap-4">
-                                        <div className="p-3 bg-gray-50 rounded-lg">
-                                            <Icon size={20} className="text-gray-600" />
-                                        </div>
-                                        <div>
-                                            <h4 className="font-bold text-gray-900">{ride.pickup} to {ride.dropoff}</h4>
-                                            <p className="text-sm text-gray-500 mt-1 capitalize">{ride.date} • {ride.vehicle?.toLowerCase()}</p>
-                                            <div className="flex items-center gap-1 mt-2">
-                                                <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                                                <span className="text-xs font-medium text-gray-600">{ride.status}</span>
-                                            </div>
+                    {history.length === 0 ? <div className="text-center py-10 text-gray-500">No rides yet.</div> : history.map((ride) => {
+                        const Icon = VEHICLE_ICONS[ride.vehicle as VehicleType] || VEHICLE_ICONS.KEKE;
+                        return (
+                            <div key={ride.id} className="flex items-start justify-between p-4 border border-gray-100 rounded-xl hover:shadow-sm transition-shadow">
+                                <div className="flex items-start gap-4">
+                                    <div className="p-3 bg-gray-50 rounded-lg"><Icon size={20} className="text-gray-600" /></div>
+                                    <div>
+                                        <h4 className="font-bold text-gray-900">{ride.pickup} to {ride.dropoff}</h4>
+                                        <p className="text-sm text-gray-500 mt-1 capitalize">{ride.date} • {ride.vehicle?.toLowerCase()}</p>
+                                        <div className="flex items-center gap-1 mt-2">
+                                            <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                                            <span className="text-xs font-medium text-gray-600">{ride.status}</span>
                                         </div>
                                     </div>
-                                    <span className="font-bold text-gray-900">{CURRENCY}{ride.price}</span>
                                 </div>
-                            );
-                        })
-                    )}
+                                <span className="font-bold text-gray-900">{CURRENCY}{ride.price}</span>
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
         )}
-
-        {/* Wallet View Overlay */}
+        
         {viewState === 'wallet' && (
             <div className="bg-white md:rounded-2xl shadow-2xl h-[600px] flex flex-col">
                 <div className="p-4 border-b border-gray-100 flex justify-between items-center">
                     <h3 className="font-bold text-lg">Wallet</h3>
-                    <button onClick={() => setViewState('booking')} className="p-2 hover:bg-gray-100 rounded-full">
-                        <X size={20} />
-                    </button>
+                    <button onClick={() => setViewState('booking')} className="p-2 hover:bg-gray-100 rounded-full"><X size={20} /></button>
                 </div>
                 <div className="p-6">
                     <div className="bg-brand-600 rounded-2xl p-6 text-white shadow-xl mb-6 relative overflow-hidden">
                          <div className="absolute top-0 right-0 p-8 opacity-10"><Wallet size={100} /></div>
                          <p className="text-brand-100 text-sm mb-1">Available Balance</p>
                          <h2 className="text-3xl font-bold mb-6">{CURRENCY}{walletBalance.toLocaleString()}</h2>
-                         <button 
-                            onClick={() => setWalletBalance(b => b + 5000)}
-                            className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 backdrop-blur-sm transition-colors"
-                        >
-                            <Plus size={16} /> Add Funds
-                         </button>
+                         <button onClick={() => setWalletBalance(b => b + 5000)} className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 backdrop-blur-sm transition-colors"><Plus size={16} /> Add Funds</button>
                     </div>
-
                     <h4 className="font-bold text-gray-800 mb-4">Recent Transactions</h4>
                     <div className="space-y-3">
                          <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
