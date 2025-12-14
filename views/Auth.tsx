@@ -695,3 +695,5 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     </div>
   );
 };
+
+export default Auth;
