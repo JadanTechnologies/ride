@@ -71,6 +71,8 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
           setEmail('chioma@example.com');
       } else if (roleType === UserRole.DRIVER) {
           setEmail('driver@example.com');
+      } else if (roleType === UserRole.ADMIN) {
+          setEmail('admin@example.com');
       }
   };
 
@@ -600,6 +602,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                             <div className="flex justify-center gap-2">
                                 <button onClick={() => fillDemoCredentials(UserRole.PASSENGER)} className="px-2 py-1 text-[10px] bg-blue-50 text-blue-600 rounded border border-blue-100 hover:bg-blue-100 font-bold transition-colors">Passenger</button>
                                 <button onClick={() => fillDemoCredentials(UserRole.DRIVER)} className="px-2 py-1 text-[10px] bg-green-50 text-green-600 rounded border border-green-100 hover:bg-green-100 font-bold transition-colors">Driver</button>
+                                <button onClick={() => fillDemoCredentials(UserRole.ADMIN)} className="px-2 py-1 text-[10px] bg-purple-50 text-purple-600 rounded border border-purple-100 hover:bg-purple-100 font-bold transition-colors">Admin</button>
                             </div>
                         </div>
                    </div>
