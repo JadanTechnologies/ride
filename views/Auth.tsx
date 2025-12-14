@@ -329,6 +329,8 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                       <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-purple-500/10 to-blue-500/10 blur-3xl rounded-full"></div>
                   </div>
               </div>
+          </div>
+       </div>
 
        {/* --- ABOUT US SECTION --- */}
        <section className="py-20 bg-white">
