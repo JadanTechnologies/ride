@@ -370,7 +370,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </tbody>
              </table>
           </div>
-      
+        );
+
       case 'finance':
         return <FinancialReports />;
 
