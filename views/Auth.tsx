@@ -73,6 +73,8 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
           setEmail('driver@example.com');
       } else if (roleType === UserRole.ADMIN) {
           setEmail('admin@example.com');
+      } else if (roleType === UserRole.LOGISTICS) {
+          setEmail('logistics@example.com');
       }
   };
 
@@ -265,42 +267,68 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                      <div className="font-bold text-white text-xl">Interswitch</div>
                  </div>
               </div>
+              {/* Right Column: Professional 3D Hologram Animation */}
+              <div className="hidden lg:flex items-center justify-center h-full">
+                  <div className="relative w-[400px] h-[500px]">
+                      {/* Hologram container */}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="relative w-64 h-64">
+                              {/* Glowing rings */}
+                              <div className="absolute inset-0 rounded-full border-2 border-cyan-400/30 animate-spin" style={{animationDuration: '8s'}}></div>
+                              <div className="absolute inset-4 rounded-full border-2 border-purple-400/30 animate-spin" style={{animationDuration: '6s', animationDirection: 'reverse'}}></div>
+                              <div className="absolute inset-8 rounded-full border-2 border-blue-400/30 animate-pulse"></div>
+                              
+                              {/* Central hologram sphere */}
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                  <div className="w-40 h-40 rounded-full bg-gradient-to-br from-cyan-500 via-purple-500 to-blue-600 opacity-20 blur-2xl animate-pulse"></div>
+                                  <div className="absolute w-32 h-32 rounded-full bg-gradient-to-t from-cyan-400 to-transparent opacity-30 animate-spin" style={{animationDuration: '4s'}}></div>
+                              </div>
 
-              {/* Right Column: 3D Traffic Animation */}
-              <div className="hidden lg:block h-[600px] relative perspective-container">
-                  <div className="absolute inset-0 flex items-center justify-center transform-style-3d">
-                      
-                      {/* 3D Road */}
-                      <div className="w-[600px] h-[800px] bg-slate-800 rounded-3xl relative road-scene overflow-hidden shadow-2xl border-4 border-slate-700">
-                          {/* Road Markings */}
-                          <div className="absolute left-1/3 top-0 bottom-0 w-2 border-r-2 border-dashed border-slate-600"></div>
-                          <div className="absolute right-1/3 top-0 bottom-0 w-2 border-l-2 border-dashed border-slate-600"></div>
-                          
-                          {/* Traffic Lane 1 - Keke */}
-                          <div className="traffic-lane top-1/4 vehicle-keke">
-                              <Truck className="w-16 h-16 text-yellow-400 neon-glow" />
+                              {/* Floating vehicles inside hologram */}
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                  <div className="relative w-40 h-40">
+                                      {/* Keke - top right */}
+                                      <div className="absolute top-2 right-4 animate-bounce" style={{animationDuration: '2s', animationDelay: '0s'}}>
+                                          <Truck className="w-8 h-8 text-yellow-300 drop-shadow-lg" />
+                                      </div>
+                                      {/* Okada - bottom left */}
+                                      <div className="absolute bottom-2 left-4 animate-bounce" style={{animationDuration: '2s', animationDelay: '0.6s'}}>
+                                          <Bike className="w-7 h-7 text-red-400 drop-shadow-lg" />
+                                      </div>
+                                      {/* Bus - top left */}
+                                      <div className="absolute top-4 left-2 animate-bounce" style={{animationDuration: '2s', animationDelay: '1.2s'}}>
+                                          <Bus className="w-8 h-8 text-blue-300 drop-shadow-lg" />
+                                      </div>
+                                  </div>
+                              </div>
+
+                              {/* Data visualization particles */}
+                              <div className="absolute inset-0">
+                                  {[...Array(8)].map((_, i) => (
+                                      <div 
+                                          key={i}
+                                          className="absolute w-1 h-1 bg-cyan-400 rounded-full animate-pulse"
+                                          style={{
+                                              left: `${50 + 35 * Math.cos((i * Math.PI) / 4)}%`,
+                                              top: `${50 + 35 * Math.sin((i * Math.PI) / 4)}%`,
+                                              animationDelay: `${i * 0.2}s`
+                                          }}
+                                      ></div>
+                                  ))}
+                              </div>
+
+                              {/* Text label */}
+                              <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2 text-center">
+                                  <p className="text-sm font-bold text-cyan-400">Real-time Tracking</p>
+                                  <p className="text-xs text-gray-400">Live Fleet Management</p>
+                              </div>
                           </div>
-
-                          {/* Traffic Lane 2 - Okada (Opposite) */}
-                          <div className="traffic-lane top-1/2 vehicle-okada">
-                              <Bike className="w-12 h-12 text-brand-400 neon-glow" />
-                          </div>
-
-                          {/* Traffic Lane 3 - Bus */}
-                          <div className="traffic-lane bottom-1/4 vehicle-bus">
-                              <Bus className="w-20 h-20 text-purple-400 neon-glow" />
-                          </div>
-
-                          {/* Overlay Gradient for depth */}
-                          <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-slate-900 pointer-events-none"></div>
                       </div>
 
-                      {/* Floating City Hologram Effect */}
-                      <div className="absolute -bottom-20 w-[80%] h-32 bg-brand-500/20 blur-[60px] rounded-full"></div>
+                      {/* Glow effect background */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-purple-500/10 to-blue-500/10 blur-3xl rounded-full"></div>
                   </div>
               </div>
-          </div>
-       </div>
 
        {/* --- ABOUT US SECTION --- */}
        <section className="py-20 bg-white">
@@ -599,9 +627,10 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                             <p className="text-xs text-center text-gray-400 mb-2 flex items-center justify-center gap-1 uppercase font-bold tracking-wider">
                                 <Key size={10} /> Test Accounts
                             </p>
-                            <div className="flex justify-center gap-2">
+                            <div className="flex justify-center gap-2 flex-wrap">
                                 <button onClick={() => fillDemoCredentials(UserRole.PASSENGER)} className="px-2 py-1 text-[10px] bg-blue-50 text-blue-600 rounded border border-blue-100 hover:bg-blue-100 font-bold transition-colors">Passenger</button>
                                 <button onClick={() => fillDemoCredentials(UserRole.DRIVER)} className="px-2 py-1 text-[10px] bg-green-50 text-green-600 rounded border border-green-100 hover:bg-green-100 font-bold transition-colors">Driver</button>
+                                <button onClick={() => fillDemoCredentials(UserRole.LOGISTICS)} className="px-2 py-1 text-[10px] bg-orange-50 text-orange-600 rounded border border-orange-100 hover:bg-orange-100 font-bold transition-colors">Logistics</button>
                                 <button onClick={() => fillDemoCredentials(UserRole.ADMIN)} className="px-2 py-1 text-[10px] bg-purple-50 text-purple-600 rounded border border-purple-100 hover:bg-purple-100 font-bold transition-colors">Admin</button>
                             </div>
                         </div>

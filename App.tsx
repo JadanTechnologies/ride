@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Auth } from './views/Auth';
 import { PassengerPortal } from './views/PassengerPortal';
 import { DriverPortal } from './views/DriverPortal';
+import { LogisticsPortal } from './views/LogisticsPortal';
 import { AdminDashboard } from './views/AdminDashboard';
 import { ChatWidget } from './components/ChatWidget';
 import { ToastContainer } from './components/Toast';
@@ -29,6 +30,12 @@ const App: React.FC = () => {
       { id: 'h-3', type: 'Trip Payment', time: 'Today, 11:00 AM', amount: 1200 },
   ]);
   const [driverDailyEarnings, setDriverDailyEarnings] = useState(8500);
+
+  // Logistics State
+  const [logisticsData, setLogisticsData] = useState({ name: 'LogisticsMart', location: MOCK_USER.location });
+  const [logisticsHistory, setLogisticsHistory] = useState<any[]>([
+      { id: 'log-1', customer: 'Fashion Hub', pickup: 'Yaba', dropoff: 'Ikeja', status: 'delivered', vehicle: 'Bus', items: 200, weight: '500kg', fare: 12000 }
+  ]);
 
   // Global Admin State
   const [pricing, setPricing] = useState(DEFAULT_PRICING);
@@ -76,6 +83,7 @@ const App: React.FC = () => {
       // Normal login welcome
       if (role === UserRole.PASSENGER) addNotification('success', `Welcome back, ${passengerData.name}!`);
       if (role === UserRole.DRIVER) addNotification('info', `Drive safe today, ${driverData.name}.`);
+      if (role === UserRole.LOGISTICS) addNotification('success', `Welcome to Logistics Hub!`);
     }
   };
 
@@ -127,6 +135,11 @@ const App: React.FC = () => {
       addNotification('success', `Driver status updated to ${status}`);
   };
 
+  const handleLogisticsOrderComplete = (order: any) => {
+      setLogisticsHistory(prev => [order, ...prev]);
+      addNotification('success', `Order ${order.id} completed!`);
+  };
+
   const renderView = () => {
     switch (currentRole) {
       case UserRole.PASSENGER:
@@ -154,6 +167,18 @@ const App: React.FC = () => {
             withdrawals={withdrawalRequests.filter(w => w.driverId === driverData.id)}
             onRideComplete={handleDriverRideComplete}
             onWithdraw={handleDriverWithdraw}
+            onLogout={handleLogout}
+            onNotify={addNotification}
+          />
+        );
+      case UserRole.LOGISTICS:
+        return (
+          <LogisticsPortal 
+            user={logisticsData} 
+            pricing={pricing}
+            surge={surge}
+            history={logisticsHistory}
+            onOrderComplete={handleLogisticsOrderComplete}
             onLogout={handleLogout}
             onNotify={addNotification}
           />

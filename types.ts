@@ -2,6 +2,7 @@ export enum UserRole {
   PASSENGER = 'PASSENGER',
   DRIVER = 'DRIVER',
   ADMIN = 'ADMIN',
+  LOGISTICS = 'LOGISTICS',
   GUEST = 'GUEST'
 }
 
