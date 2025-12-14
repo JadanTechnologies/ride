@@ -14,6 +14,7 @@ import DeviceTracking from '../components/DeviceTracking';
 import AppManagement from '../components/AppManagement';
 import SupportManagement from '../components/SupportManagement';
 import UserManagement from '../components/UserManagement';
+import { FinancialReports } from '../components/FinancialReports';
 
 // Fix for Leaflet import in ESM environments
 const Leaflet = (L as any).default ?? L;
@@ -372,28 +373,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         );
       
       case 'finance':
-        return (
-          <div className="space-y-8">
-             {/* Finance Widgets */}
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100"><p className="text-sm text-gray-500 mb-1">Platform Commission</p><h2 className="text-3xl font-bold text-gray-900">{CURRENCY}245,000</h2></div>
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100"><p className="text-sm text-gray-500 mb-1">Pending Withdrawals</p><h2 className="text-3xl font-bold text-gray-900">{CURRENCY}{withdrawalRequests.filter(w => w.status === 'Pending').reduce((a, b) => a + b.amount, 0).toLocaleString()}</h2></div>
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100"><p className="text-sm text-gray-500 mb-1">Net Revenue</p><h2 className="text-3xl font-bold text-brand-600">{CURRENCY}4.2M</h2></div>
-             </div>
-             {/* Withdrawal Table */}
-             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="p-6 border-b border-gray-100"><h3 className="font-bold text-gray-800">Withdrawal Requests</h3></div>
-                <table className="w-full text-left">
-                    <thead className="bg-gray-50 text-gray-500 text-sm"><tr><th className="p-4 font-medium">Driver</th><th className="p-4 font-medium">Amount</th><th className="p-4 font-medium">Status</th><th className="p-4 font-medium text-right">Action</th></tr></thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {withdrawalRequests.map((w) => (
-                        <tr key={w.id} className="hover:bg-gray-50"><td className="p-4 font-bold">{w.driverName}</td><td className="p-4">{CURRENCY}{w.amount.toLocaleString()}</td><td className="p-4"><span className={`px-2 py-1 rounded text-xs font-bold ${w.status === 'Pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>{w.status}</span></td><td className="p-4 text-right">{w.status === 'Pending' && <Button onClick={() => onProcessWithdrawal(w.id)} className="py-1 px-3 text-xs" variant="primary">Pay Now</Button>}</td></tr>
-                      ))}
-                    </tbody>
-                </table>
-             </div>
-          </div>
-        );
+        return <FinancialReports />;
 
       case 'settings':
         return <AdminSettingsPanel />;
