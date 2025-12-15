@@ -30,11 +30,11 @@ const BrandingSettings: React.FC = () => {
         <div className="grid grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium mb-2">Logo (URL)</label>
-            <input 
-              type="url" 
-              placeholder="https://..." 
+            <input
+              type="url"
+              placeholder="https://..."
               className="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-              defaultValue="https://via.placeholder.com/200x50"
+              defaultValue="https://via.placeholder.com/200x50?text=Okada+Bike"
             />
           </div>
           <div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, X, Home, LogOut, Settings, Bell, User, MessageSquare } from 'lucide-react';
+import { Menu, X, Home, LogOut, Settings, Bell, User, MessageSquare, Bike } from 'lucide-react';
 
 interface NavItem {
   id: string;
@@ -50,7 +50,7 @@ export const CollapsibleNavBar: React.FC<CollapsibleNavBarProps> = ({
             >
               {isOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
-            <h1 className="text-xl font-bold text-brand-400 tracking-tight">KEKE</h1>
+            <Bike className="w-6 h-6 text-brand-400" />
           </div>
 
           {/* Center: User Info */}

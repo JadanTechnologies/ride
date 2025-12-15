@@ -182,7 +182,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
           {/* Header */}
           <header className="relative z-20 container mx-auto px-6 py-6 flex justify-between items-center">
             <div className="flex items-center gap-2">
-                <div className="w-10 h-10 bg-brand-600 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-brand-500/50">K</div>
+                <div className="w-10 h-10 bg-brand-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-brand-500/50"><Bike size={24} /></div>
                 <span className="text-white font-bold text-xl tracking-tight hidden sm:block">{APP_NAME}</span>
             </div>
             
@@ -441,7 +441,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
                    <div>
                        <div className="flex items-center gap-2 mb-4">
-                            <div className="w-8 h-8 bg-brand-600 rounded flex items-center justify-center text-white font-bold">K</div>
+                            <div className="w-8 h-8 bg-brand-600 rounded flex items-center justify-center text-white"><Bike size={20} /></div>
                             <span className="text-white font-bold text-lg">{APP_NAME}</span>
                        </div>
                        <p className="text-sm">Reliable rides for everyday people.</p>
