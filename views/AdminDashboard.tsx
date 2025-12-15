@@ -15,6 +15,7 @@ import AppManagement from '../components/AppManagement';
 import SupportManagement from '../components/SupportManagement';
 import UserManagement from '../components/UserManagement';
 import { FinancialReports } from '../components/FinancialReports';
+import CollapsibleNavBar from '../components/CollapsibleNavBar';
 
 // Fix for Leaflet import in ESM environments
 const Leaflet = (L as any).default ?? L;
@@ -98,6 +99,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 }) => {
   const [currentView, setCurrentView] = useState<AdminView>('overview');
   const [broadcastInput, setBroadcastInput] = useState('');
+
+  // Navigation items for CollapsibleNavBar
+  const navItems = [
+    { id: 'overview', label: 'Dashboard', icon: <Activity size={20} />, onClick: () => setCurrentView('overview') },
+    { id: 'map', label: 'Live Map', icon: <MapIcon size={20} />, onClick: () => setCurrentView('map') },
+    { id: 'rides', label: 'Rides', icon: <Truck size={20} />, onClick: () => setCurrentView('rides') },
+    { id: 'drivers', label: 'Drivers', icon: <Briefcase size={20} />, onClick: () => setCurrentView('drivers') },
+    { id: 'users', label: 'Users', icon: <Users size={20} />, onClick: () => setCurrentView('users') },
+    { id: 'usermanagement', label: 'User Mgmt', icon: <UserPlus size={20} />, onClick: () => setCurrentView('usermanagement') },
+    { id: 'disputes', label: 'Disputes', icon: <AlertCircle size={20} />, onClick: () => setCurrentView('disputes') },
+    { id: 'logistics', label: 'Logistics', icon: <Box size={20} />, onClick: () => setCurrentView('logistics') },
+    { id: 'finance', label: 'Finance', icon: <DollarSign size={20} />, onClick: () => setCurrentView('finance') },
+    { id: 'devices', label: 'Devices', icon: <Smartphone size={20} />, onClick: () => setCurrentView('devices') },
+    { id: 'apps', label: 'Apps', icon: <Wrench size={20} />, onClick: () => setCurrentView('apps') },
+    { id: 'support', label: 'Support', icon: <MessageSquare size={20} />, onClick: () => setCurrentView('support') },
+    { id: 'fraud', label: 'Fraud', icon: <AlertTriangle size={20} />, onClick: () => setCurrentView('fraud') },
+    { id: 'settings', label: 'Settings', icon: <Settings size={20} />, onClick: () => setCurrentView('settings') },
+  ];
 
   // Recruitment State
   const [showRecruitModal, setShowRecruitModal] = useState(false);
@@ -266,7 +285,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     switch(currentView) {
       case 'map':
         return (
-          <AdminMapView drivers={drivers} users={users} />
+          <div className="h-[calc(100vh-12rem)]">
+            <AdminMapView drivers={drivers} users={users} />
+          </div>
         );
 
       case 'drivers':
@@ -528,43 +549,38 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <aside className="w-64 bg-slate-900 text-white hidden md:flex flex-col">
-         <div className="p-6"><h1 className="text-2xl font-bold text-brand-500 tracking-tighter">KEKE ADMIN</h1></div>
-         <nav className="flex-1 px-4 space-y-2">
-            {[
-                { id: 'overview', icon: Activity, label: 'Dashboard' },
-                { id: 'map', icon: MapIcon, label: 'Live Map' },
-                { id: 'rides', icon: Truck, label: 'Rides' },
-                { id: 'drivers', icon: Briefcase, label: 'Drivers' },
-                { id: 'users', icon: Users, label: 'Users' },
-                { id: 'usermanagement', icon: UserPlus, label: 'User Management' },
-                { id: 'disputes', icon: AlertCircle, label: 'Disputes' },
-                { id: 'logistics', icon: Box, label: 'Logistics' },
-                { id: 'finance', icon: DollarSign, label: 'Finance' },
-                { id: 'devices', icon: Smartphone, label: 'Device Tracking' },
-                { id: 'apps', icon: Wrench, label: 'App Management' },
-                { id: 'support', icon: MessageSquare, label: 'Support' },
-                { id: 'fraud', icon: AlertTriangle, label: 'Fraud Detection' },
-                { id: 'settings', icon: Settings, label: 'Settings' }
-            ].map(item => (
-                <div key={item.id} onClick={() => setCurrentView(item.id as AdminView)} className={`p-3 rounded-lg flex items-center gap-3 cursor-pointer ${currentView === item.id ? 'bg-brand-600' : 'text-gray-400 hover:bg-slate-800'}`}>
-                    <item.icon size={20} /> {item.label}
-                </div>
-            ))}
-         </nav>
-         <div className="p-4 border-t border-slate-800"><button onClick={onLogout} className="text-red-400 hover:text-red-300 text-sm font-medium">Log Out</button></div>
-      </aside>
+    <>
+      <CollapsibleNavBar
+        userName="Super Admin"
+        navItems={navItems}
+        onLogout={onLogout}
+        hasNotifications={pendingWithdrawalsCount > 0}
+      />
 
-      {/* Main Content */}
-      <main className="flex-1 p-8 overflow-y-auto h-screen">
-         <header className="flex justify-between items-center mb-8">
-            <div><h2 className="text-2xl font-bold text-gray-800 capitalize">{currentView === 'map' ? 'Live Fleet Map' : currentView}</h2><p className="text-gray-500">Platform Management System</p></div>
-            <div className="flex gap-4"><button className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50">Export Report</button><div className="flex items-center gap-2 px-4 py-2 bg-brand-50 text-brand-700 rounded-lg text-sm font-medium"><Shield size={16} /> Super Admin</div></div>
-         </header>
-         {renderContent()}
-      </main>
-    </div>
+      <div className="relative min-h-[calc(100vh-4rem)] w-full flex flex-col md:flex-row overflow-hidden bg-gray-100 md:pt-16">
+        {/* Main Content Panel */}
+        <div className="flex-1 relative overflow-hidden">
+          <div className="p-6 md:p-8">
+            <header className="flex justify-between items-center mb-8">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800 capitalize">
+                  {currentView === 'map' ? 'Live Fleet Map' : currentView}
+                </h2>
+                <p className="text-gray-500">Platform Management System</p>
+              </div>
+              <div className="flex gap-4">
+                <button className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50">
+                  Export Report
+                </button>
+                <div className="flex items-center gap-2 px-4 py-2 bg-brand-50 text-brand-700 rounded-lg text-sm font-medium">
+                  <Shield size={16} /> Super Admin
+                </div>
+              </div>
+            </header>
+            {renderContent()}
+          </div>
+        </div>
+      </div>
+    </>
   );
 };
