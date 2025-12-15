@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, VehicleType, WithdrawalRequest } from '../types';
 import { CURRENCY, VEHICLE_ICONS, LAGOS_COORDS } from '../constants';
-import { Navigation, Wallet, Bell, Phone, MessageSquare, ArrowRight, Zap, Lock, AlertCircle, Clock, RotateCcw, TrendingUp, History } from 'lucide-react';
+import { Navigation, Wallet, Bell, Phone, MessageSquare, ArrowRight, Zap, Lock, AlertCircle, Clock, RotateCcw, TrendingUp, History, Layers } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import * as L from 'leaflet';
 import { Button } from '../components/Button';
@@ -49,7 +49,7 @@ const createPinIcon = (color: string) => {
   });
 };
 
-const DriverMap = ({ position, pickup, dropoff }) => {
+const DriverMap = ({ position, pickup, dropoff, mapView }) => {
     const map = useMap();
     useEffect(() => {
         if (!map) return;
@@ -69,8 +69,14 @@ const DriverMap = ({ position, pickup, dropoff }) => {
     return (
         <>
             <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution={mapView === 'street'
+                  ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  : '&copy; <a href="https://www.esri.com/">Esri</a> &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+                }
+                url={mapView === 'street'
+                  ? "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  : "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                }
             />
             {position && !isNaN(position.lat) && driverIcon && (
                 <Marker position={[position.lat, position.lng]} icon={driverIcon}>
@@ -101,6 +107,7 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ user, pricing, commi
   const [driverLocation, setDriverLocation] = useState(user.location || LAGOS_COORDS);
   const [pickupCoords, setPickupCoords] = useState<any>(null);
   const [dropoffCoords, setDropoffCoords] = useState<any>(null);
+  const [mapView, setMapView] = useState<'street' | 'satellite'>('street');
 
   // -- Access Control for Pending/Suspended Drivers --
   if (user.status === 'Pending') {
@@ -292,8 +299,20 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ user, pricing, commi
              <>
                 <div className="absolute inset-0 bg-gray-300 z-0">
                     <MapContainer center={[driverLocation.lat, driverLocation.lng]} zoom={15} style={{ height: '100%', width: '100%' }} zoomControl={false}>
-                        <DriverMap position={driverLocation} pickup={rideStatus !== 'idle' ? pickupCoords : null} dropoff={rideStatus === 'in_progress' ? dropoffCoords : null} />
+                        <DriverMap position={driverLocation} pickup={rideStatus !== 'idle' ? pickupCoords : null} dropoff={rideStatus === 'in_progress' ? dropoffCoords : null} mapView={mapView} />
                     </MapContainer>
+
+                    {/* Map View Toggle */}
+                    <div className="absolute top-4 right-4 z-20 bg-white rounded-lg shadow-lg border border-gray-200">
+                        <button
+                          onClick={() => setMapView(mapView === 'street' ? 'satellite' : 'street')}
+                          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                          title={`Switch to ${mapView === 'street' ? 'Satellite' : 'Street'} View`}
+                        >
+                          <Layers size={16} />
+                          {mapView === 'street' ? 'Satellite' : 'Street'}
+                        </button>
+                    </div>
                 </div>
                 
                 {/* Offline / Idle State */}
