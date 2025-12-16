@@ -151,6 +151,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [users, setUsers] = useState<User[]>([]);
   const [allRides, setAllRides] = useState<Ride[]>([]);
 
+  // Live Ops State
+  const [logisticsUnits, setLogisticsUnits] = useState<Driver[]>([]);
+  const [liveEvents, setLiveEvents] = useState<{ id: string, message: string, time: string, type: 'ride' | 'logistics' | 'system' }[]>([]);
+
   useEffect(() => {
     // Generate some random positions around Lagos for demo
     const getRandomPos = () => ({
@@ -181,6 +185,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setUsers([sessionData.passenger, ...mockUsers]);
     setAllRides([...sessionData.rides, ...mockRides]);
 
+    // Mock Logistics
+    const mockLogistics: Driver[] = [
+      { id: 'l-1', name: "Delivery Unit 01", vehicleType: VehicleType.BUS, status: "Active", rating: 5.0, isCompany: true, location: getRandomPos(), email: '', phone: '', role: UserRole.DRIVER, walletBalance: 0, vehiclePlate: "DEL-001", isOnline: true, totalRides: 0, earnings: { today: 0, week: 0, month: 0 } },
+      { id: 'l-2', name: "Flash Bike 04", vehicleType: VehicleType.OKADA, status: "Active", rating: 5.0, isCompany: true, location: getRandomPos(), email: '', phone: '', role: UserRole.DRIVER, walletBalance: 0, vehiclePlate: "DEL-002", isOnline: true, totalRides: 0, earnings: { today: 0, week: 0, month: 0 } },
+      { id: 'l-3', name: "Heavy Mover 02", vehicleType: VehicleType.BUS, status: "Active", rating: 5.0, isCompany: true, location: getRandomPos(), email: '', phone: '', role: UserRole.DRIVER, walletBalance: 0, vehiclePlate: "DEL-003", isOnline: true, totalRides: 0, earnings: { today: 0, week: 0, month: 0 } },
+    ];
+    setLogisticsUnits(mockLogistics);
+
+    setLiveEvents([
+      { id: 'e-1', message: 'System initialization complete', time: '10:00:00', type: 'system' }
+    ]);
+
   }, [sessionData]);
 
   // Simulate movement
@@ -200,6 +216,43 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }, 2000);
     return () => clearInterval(interval);
   }, [currentView]);
+
+  // Simulate Logistics & Live Events
+  useEffect(() => {
+    if (currentView !== 'map') return;
+    const interval = setInterval(() => {
+      // Move logistics
+      setLogisticsUnits(prev => prev.map(d => ({
+        ...d,
+        location: {
+          lat: d.location.lat + (Math.random() - 0.5) * 0.002,
+          lng: d.location.lng + (Math.random() - 0.5) * 0.002
+        }
+      })));
+
+      // Random Event
+      if (Math.random() > 0.6) {
+        const events = [
+          { msg: `Driver ${drivers[Math.floor(Math.random() * drivers.length)]?.name?.split(' ')[0]} started trip`, type: 'ride' as const },
+          { msg: `New order #ORD-${Math.floor(Math.random() * 9000) + 1000} received`, type: 'logistics' as const },
+          { msg: `Passenger ${users[Math.floor(Math.random() * users.length)]?.name?.split(' ')[0]} requested a ride`, type: 'ride' as const },
+          { msg: `Logistics Unit ${Math.floor(Math.random() * 3) + 1} arriving at pickup`, type: 'logistics' as const },
+          { msg: `Payment of ${CURRENCY}${Math.floor(Math.random() * 5000)} processed`, type: 'system' as const }
+        ];
+        const evt = events[Math.floor(Math.random() * events.length)];
+        const time = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+        setLiveEvents(prev => [{
+          id: Date.now().toString(),
+          message: evt.msg,
+          time: time,
+          type: evt.type
+        }, ...prev].slice(0, 10)); // Keep last 10
+      }
+
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [currentView, drivers, users]);
 
   const [disputes, setDisputes] = useState<Dispute[]>([
     { id: 'd-001', complainant: "Chioma Adebayo", respondent: "Ibrahim Musa", issue: "Driver requested extra cash", status: "Open", date: "Today, 10:30 AM" },
@@ -290,7 +343,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       case 'map':
         return (
           <div className="h-[calc(100vh-12rem)]">
-            <AdminMapView drivers={drivers} users={users} />
+            <AdminMapView drivers={drivers} users={users} logistics={logisticsUnits} events={liveEvents} />
           </div>
         );
 

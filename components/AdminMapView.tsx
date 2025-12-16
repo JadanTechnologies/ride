@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import { Satellite, Map as MapIcon } from 'lucide-react';
+import { Satellite, Map as MapIcon, Package, Bell, Radio } from 'lucide-react';
 import * as L from 'leaflet';
 import { LAGOS_COORDS } from '../constants';
 import { VehicleType } from '../types';
@@ -25,9 +25,18 @@ interface User {
   location: { lat: number; lng: number };
 }
 
+interface LiveEvent {
+  id: string;
+  message: string;
+  time: string;
+  type: 'ride' | 'logistics' | 'system';
+}
+
 interface AdminMapViewProps {
   drivers: Driver[];
   users: User[];
+  logistics?: Driver[]; // Reuse Driver type for simplicity, distiguished by isLogistics flag or separate prop
+  events?: LiveEvent[];
 }
 
 const createIcon = (type: VehicleType | 'USER') => {
@@ -53,35 +62,67 @@ const createIcon = (type: VehicleType | 'USER') => {
   });
 };
 
-export const AdminMapView: React.FC<AdminMapViewProps> = ({ drivers, users }) => {
+const createLogisticsIcon = () => {
+  if (!Leaflet || !Leaflet.divIcon) return undefined;
+  return Leaflet.divIcon({
+    className: 'custom-icon',
+    html: `<div style="background-color: #7c3aed; width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3); border: 2px solid white;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>`,
+    iconSize: [40, 40],
+    iconAnchor: [20, 40],
+    popupAnchor: [0, -40]
+  });
+};
+
+export const AdminMapView: React.FC<AdminMapViewProps> = ({ drivers, users, logistics = [], events = [] }) => {
   const [mapType, setMapType] = useState<'osm' | 'satellite'>('osm');
 
-  const tileUrl = mapType === 'osm' 
+  const tileUrl = mapType === 'osm'
     ? "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
     : "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden h-[80vh] relative z-0">
+      {/* Live Feed Overlay */}
+      {events.length > 0 && (
+        <div className="absolute top-4 left-4 z-[500] w-80 bg-white/90 backdrop-blur-md rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+          <div className="bg-brand-900 px-4 py-2 flex items-center justify-between">
+            <h4 className="text-white font-bold text-sm flex items-center gap-2"><Radio size={16} className="text-red-500 animate-pulse" /> Live Ops</h4>
+            <span className="text-xs text-brand-200 font-mono">REC</span>
+          </div>
+          <div className="max-h-60 overflow-y-auto p-2 space-y-2">
+            {events.map((evt) => (
+              <div key={evt.id} className="text-xs p-2 bg-white rounded border border-gray-100 shadow-sm flex gap-2 items-start animate-in slide-in-from-left duration-300">
+                {evt.type === 'ride' ? <div className="p-1 bg-blue-100 rounded text-blue-600"><MapIcon size={12} /></div> :
+                  evt.type === 'logistics' ? <div className="p-1 bg-purple-100 rounded text-purple-600"><Package size={12} /></div> :
+                    <div className="p-1 bg-gray-100 rounded text-gray-600"><Bell size={12} /></div>}
+                <div>
+                  <p className="text-gray-900 font-medium leading-tight">{evt.message}</p>
+                  <span className="text-[10px] text-gray-500">{evt.time}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Map Type Toggle */}
-      <div className="absolute top-4 right-4 z-10 flex gap-2">
+      <div className="absolute top-4 right-4 z-[500] flex gap-2">
         <button
           onClick={() => setMapType('osm')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-            mapType === 'osm'
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${mapType === 'osm'
               ? 'bg-brand-600 text-white'
               : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
-          }`}
+            }`}
         >
           <MapIcon size={18} />
           Map
         </button>
         <button
           onClick={() => setMapType('satellite')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-            mapType === 'satellite'
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${mapType === 'satellite'
               ? 'bg-brand-600 text-white'
               : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
-          }`}
+            }`}
         >
           <Satellite size={18} />
           Satellite
@@ -93,14 +134,14 @@ export const AdminMapView: React.FC<AdminMapViewProps> = ({ drivers, users }) =>
           attribution={mapType === 'osm' ? '&copy; OpenStreetMap contributors' : '&copy; Esri'}
           url={tileUrl}
         />
-        
+
         {/* Driver Markers */}
         {drivers.map(d => {
           const icon = createIcon(d.vehicle === 'Keke' ? VehicleType.KEKE : d.vehicle === 'Okada' ? VehicleType.OKADA : VehicleType.BUS);
           if (!icon) return null;
           return (
-            <Marker 
-              key={`driver-${d.id}`} 
+            <Marker
+              key={`driver-${d.id}`}
               position={[d.location.lat, d.location.lng]}
               icon={icon}
             >
@@ -122,13 +163,34 @@ export const AdminMapView: React.FC<AdminMapViewProps> = ({ drivers, users }) =>
           );
         })}
 
+        {/* Logistics Markers */}
+        {logistics.map(l => {
+          const icon = createLogisticsIcon();
+          if (!icon) return null;
+          return (
+            <Marker
+              key={`logistics-${l.id}`}
+              position={[l.location.lat, l.location.lng]}
+              icon={icon}
+            >
+              <Popup>
+                <div className="p-2">
+                  <h4 className="font-bold flex items-center gap-2"><Package size={16} className="text-purple-600" /> Logistics Unit</h4>
+                  <p className="text-sm font-medium">{l.name}</p>
+                  <p className="text-xs text-gray-500">{l.vehicle} • {l.status}</p>
+                </div>
+              </Popup>
+            </Marker>
+          )
+        })}
+
         {/* User Markers */}
         {users.filter(u => u.status === 'Active').map(u => {
           const icon = createIcon('USER');
           if (!icon) return null;
           return (
-            <Marker 
-              key={`user-${u.id}`} 
+            <Marker
+              key={`user-${u.id}`}
               position={[u.location.lat, u.location.lng]}
               icon={icon}
             >
