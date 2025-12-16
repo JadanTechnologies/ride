@@ -178,7 +178,7 @@ export const LogisticsPortal: React.FC<LogisticsPortalProps> = ({ user, pricing,
         hasNotifications={false}
       />
 
-      <div className="relative min-h-[calc(100vh-4rem)] w-full flex flex-col md:flex-row overflow-hidden bg-gray-100 md:pt-16">
+      <div className="relative min-h-[calc(100vh-4rem)] w-full flex flex-col md:flex-row overflow-hidden bg-gray-100 pt-16 md:pl-64">
         {/* Map Section */}
         <div className="flex-1 relative h-full z-0 hidden md:block">
           {userLocation && !isNaN(userLocation.lat) ? (

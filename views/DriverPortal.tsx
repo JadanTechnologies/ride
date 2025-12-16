@@ -291,7 +291,7 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ user, pricing, commi
         onLogout={onLogout}
         hasNotifications={false}
       />
-      <div className="relative min-h-[calc(100vh-4rem)] w-full flex flex-col md:flex-row overflow-hidden bg-gray-100 md:pt-16">
+      <div className="relative min-h-[calc(100vh-4rem)] w-full flex flex-col md:flex-row overflow-hidden bg-gray-100 pt-16 md:pl-64">
 
        {/* Main Content Area */}
        <div className="flex-1 relative overflow-hidden">

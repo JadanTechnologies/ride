@@ -3,7 +3,10 @@ import { Truck, Bike, Bus } from 'lucide-react';
 
 export const APP_NAME = "Keke Napepe Ride";
 export const CURRENCY = "₦";
-export const DEFAULT_COMMISSION = 15; // 15% Platform fee
+export const DEFAULT_COMMISSION = {
+  ride: 15, // 15% for rides
+  logistics: 20 // 20% for logistics
+};
 
 // Default Center (Ikeja, Lagos)
 export const LAGOS_COORDS = { lat: 6.6018, lng: 3.3515 };

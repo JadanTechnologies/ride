@@ -159,7 +159,7 @@ const App: React.FC = () => {
           <DriverPortal 
             user={driverData} 
             pricing={pricing}
-            commissionRate={commissionRate}
+            commissionRate={commissionRate.ride}
             surge={surge}
             dailyEarnings={driverDailyEarnings}
             history={driverHistory}

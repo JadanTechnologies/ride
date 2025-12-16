@@ -10,9 +10,27 @@ import StaffManagement from './settings/StaffManagement.tsx';
 import AccessControlSettings from './settings/AccessControlSettings.tsx';
 import AIProviderSettings from './settings/AIProviderSettings.tsx';
 
+import { Pricing, CommissionRates } from '../types';
+
 type SettingTab = 'branding' | 'payment' | 'email' | 'sms' | 'push' | 'templates' | 'staff' | 'access' | 'monetization' | 'ai';
 
-export const AdminSettingsPanel: React.FC = () => {
+interface AdminSettingsPanelProps {
+  currentPricing: Pricing;
+  onUpdatePricing: (pricing: Pricing) => void;
+  currentCommission: CommissionRates;
+  onUpdateCommission: (rates: CommissionRates) => void;
+  currentSurge: number;
+  onUpdateSurge: (surge: number) => void;
+}
+
+export const AdminSettingsPanel: React.FC<AdminSettingsPanelProps> = ({
+  currentCommission,
+  onUpdateCommission,
+  currentPricing,
+  onUpdatePricing,
+  currentSurge,
+  onUpdateSurge,
+}) => {
   const [activeTab, setActiveTab] = useState<SettingTab>('branding');
 
   const tabs = [
@@ -70,7 +88,10 @@ export const AdminSettingsPanel: React.FC = () => {
           {activeTab === 'templates' && <TemplateManager />}
           {activeTab === 'staff' && <StaffManagement />}
           {activeTab === 'access' && <AccessControlSettings />}
-          {activeTab === 'monetization' && <MonetizationSettings />}
+          {activeTab === 'monetization' && <MonetizationSettings 
+            currentCommission={currentCommission}
+            onUpdateCommission={onUpdateCommission}
+          />}
           {activeTab === 'ai' && <AIProviderSettings />}
         </div>
       </div>
@@ -78,29 +99,69 @@ export const AdminSettingsPanel: React.FC = () => {
   );
 };
 
-const MonetizationSettings: React.FC = () => (
-  <div className="bg-white rounded-lg shadow p-6">
-    <h3 className="text-2xl font-bold mb-4">Monetization Settings</h3>
-    <div className="space-y-4">
-      <div className="flex items-center gap-4">
-        <input type="checkbox" id="enable-monetization" className="w-4 h-4" defaultChecked />
-        <label htmlFor="enable-monetization" className="text-lg">Enable Platform Monetization (Commission, Surge Pricing, etc.)</label>
-      </div>
-      <div className="border-t pt-4 mt-4">
-        <h4 className="font-semibold mb-2">Commission Settings</h4>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Ride Commission (%)</label>
-            <input type="number" placeholder="10" min="0" max="100" className="w-full border rounded px-3 py-2" />
+const MonetizationSettings: React.FC<{
+  currentCommission: CommissionRates,
+  onUpdateCommission: (rates: CommissionRates) => void;
+}> = ({ currentCommission, onUpdateCommission }) => {
+  const [commission, setCommission] = useState(currentCommission);
+
+  const handleCommissionChange = (key: keyof CommissionRates, value: string) => {
+    setCommission(prev => ({ ...prev, [key]: parseFloat(value) || 0 }));
+  };
+
+  const handleSaveChanges = () => {
+    onUpdateCommission(commission);
+    // Optionally add a notification here to inform the user that settings are saved.
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow p-6">
+      <h3 className="text-2xl font-bold mb-4">Monetization Settings</h3>
+      <div className="space-y-4">
+        <div className="flex items-center gap-4">
+          <input type="checkbox" id="enable-monetization" className="w-4 h-4" defaultChecked />
+          <label htmlFor="enable-monetization" className="text-lg">Enable Platform Monetization (Commission, Surge Pricing, etc.)</label>
+        </div>
+        <div className="border-t pt-4 mt-4">
+          <h4 className="font-semibold mb-2">Commission Settings</h4>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Ride Commission (%)</label>
+              <input 
+                type="number" 
+                value={commission.ride}
+                onChange={(e) => handleCommissionChange('ride', e.target.value)}
+                placeholder="10" 
+                min="0" 
+                max="100" 
+                className="w-full border rounded px-3 py-2" 
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Logistics Commission (%)</label>
+              <input 
+                type="number" 
+                value={commission.logistics}
+                onChange={(e) => handleCommissionChange('logistics', e.target.value)}
+                placeholder="15" 
+                min="0" 
+                max="100" 
+                className="w-full border rounded px-3 py-2" 
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Food Commission (%)</label>
-            <input type="number" placeholder="15" min="0" max="100" className="w-full border rounded px-3 py-2" />
-          </div>
+        </div>
+        <div className="border-t pt-4 mt-4 flex justify-end">
+          <button 
+            onClick={handleSaveChanges}
+            className="bg-brand-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-brand-700 transition-colors"
+          >
+            Save Changes
+          </button>
         </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default AdminSettingsPanel;

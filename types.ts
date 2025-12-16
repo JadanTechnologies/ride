@@ -108,3 +108,8 @@ export interface Dispute {
   status: 'Open' | 'Resolved';
   date: string;
 }
+
+export interface CommissionRates {
+  ride: number;
+  logistics: number;
+}

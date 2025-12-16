@@ -7,7 +7,7 @@ import * as L from 'leaflet';
 import { Users, Truck, DollarSign, Activity, AlertCircle, Settings, Check, X, Shield, Search, MoreVertical, ArrowUpRight, Zap, Ban, Map as MapIcon, Send, UserPlus, Briefcase, Bike, Bus, Smartphone, Wrench, MessageSquare, AlertTriangle, Box } from 'lucide-react';
 import { CURRENCY, LAGOS_COORDS } from '../constants';
 import { Button } from '../components/Button';
-import { User, Driver, WithdrawalRequest, VehicleType, Ride, Dispute, Pricing, RideStatus, UserRole } from '../types';
+import { User, Driver, WithdrawalRequest, VehicleType, Ride, Dispute, Pricing, RideStatus, UserRole, CommissionRates } from '../types';
 import AdminSettingsPanel from '../components/AdminSettingsPanel';
 import AdminMapView from '../components/AdminMapView';
 import DeviceTracking from '../components/DeviceTracking';
@@ -21,9 +21,11 @@ import LogisticsManagement from '../components/LogisticsManagement';
 // Fix for Leaflet import in ESM environments
 const Leaflet = (L as any).default ?? L;
 
+
+
 interface AdminDashboardProps {
   currentPricing: Pricing;
-  currentCommission: number;
+  currentCommission: CommissionRates;
   currentSurge: number;
   withdrawalRequests: WithdrawalRequest[];
   sessionData: {
@@ -32,7 +34,7 @@ interface AdminDashboardProps {
     rides: Ride[];
   };
   onUpdatePricing: (pricing: Pricing) => void;
-  onUpdateCommission: (rate: number) => void;
+  onUpdateCommission: (rates: CommissionRates) => void;
   onUpdateSurge: (surge: number) => void;
   onUpdateDriverStatus: (status: 'Active' | 'Suspended') => void;
   onProcessWithdrawal: (id: string) => void;
@@ -391,7 +393,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         return <LogisticsManagement />;
 
       case 'settings':
-        return <AdminSettingsPanel />;
+        return <AdminSettingsPanel 
+          currentCommission={currentCommission}
+          onUpdateCommission={onUpdateCommission}
+          currentPricing={currentPricing}
+          onUpdatePricing={onUpdatePricing}
+          currentSurge={currentSurge}
+          onUpdateSurge={onUpdateSurge}
+        />;
 
       case 'devices':
         return <DeviceTracking />;
@@ -492,7 +501,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         hasNotifications={pendingWithdrawalsCount > 0}
       />
 
-      <div className="relative min-h-[calc(100vh-4rem)] w-full flex flex-col md:flex-row overflow-hidden bg-gray-100 md:pt-16 md:pl-64">
+      <div className="relative min-h-[calc(100vh-4rem)] w-full flex flex-col md:flex-row overflow-hidden bg-gray-100 pt-16 md:pl-64">
         {/* Main Content Panel */}
         <div className="flex-1 relative overflow-hidden">
           <div className="p-6 md:p-8">
