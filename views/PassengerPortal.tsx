@@ -66,7 +66,7 @@ const createMapIcon = (type: 'user' | 'keke' | 'okada' | 'bus' | 'destination', 
     }
 };
 
-const MapComponent = ({ userLocation, drivers, assignedDriver, destination }) => {
+const MapComponent = ({ userLocation, drivers, assignedDriver, destination, onSelectVehicle }) => {
     const map = useMap();
     useEffect(() => {
         if (!map) return;
@@ -109,11 +109,32 @@ const MapComponent = ({ userLocation, drivers, assignedDriver, destination }) =>
                 const icon = createMapIcon(d.type.toLowerCase(), d.heading);
                 if (!icon) return null;
                 return (
-                    <Marker key={d.id} position={[d.lat, d.lng]} icon={icon}>
+                    <Marker
+                        key={d.id}
+                        position={[d.lat, d.lng]}
+                        icon={icon}
+                        eventHandlers={{
+                            click: () => {
+                                // Optional: auto-select on click? For now just popup.
+                            }
+                        }}
+                    >
                         <Popup>
-                            <div className="text-center p-1">
-                                <span className="font-bold block text-sm capitalize">{d.type}</span>
-                                <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full border border-green-100">Available</span>
+                            <div className="text-center p-2">
+                                <span className="font-bold block text-sm capitalize mb-1">{d.type}</span>
+                                <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full border border-green-100 flex items-center justify-center gap-1 mx-auto w-fit">
+                                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Available
+                                </span>
+                                <div className="mt-2 text-xs text-gray-400">2 mins away</div>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onSelectVehicle(d.type);
+                                    }}
+                                    className="mt-2 w-full bg-brand-600 text-white text-xs font-bold py-1.5 rounded hover:bg-brand-700 transition-colors"
+                                >
+                                    Book {d.type}
+                                </button>
                             </div>
                         </Popup>
                     </Marker>
@@ -341,6 +362,21 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
         { id: 'support', label: 'Support', icon: <MessageSquare size={20} />, onClick: () => { } },
     ];
 
+    const handleSelectMapVehicle = (type: string) => {
+        // Convert map type string (which might be title case) to VehicleType enum
+        const vType = type.toUpperCase() as VehicleType;
+        if (Object.values(VehicleType).includes(vType)) {
+            setSelectedVehicle(vType);
+            onNotify('info', `Selected ${type}. Enter dropoff location to continue.`);
+            // Ensure booking view is open
+            setViewState('booking');
+            if (bookingStep === 'input' && !pickup) {
+                // Optional: reverse geocode userLocation to fill pickup?
+                // For now just focus input
+            }
+        }
+    };
+
     return (
         <>
             <CollapsibleNavBar
@@ -360,6 +396,7 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
                                 drivers={nearbyDrivers}
                                 assignedDriver={assignedDriverPos}
                                 destination={destinationLocation}
+                                onSelectVehicle={handleSelectMapVehicle}
                             />
                         </MapContainer>
                     ) : (
