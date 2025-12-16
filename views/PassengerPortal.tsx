@@ -285,8 +285,10 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
         setBookingStep('confirm');
     };
 
-    const calculateFare = (type: VehicleType, distVal: number) => {
-        const p = pricing[type];
+    const calculateFare = (type: VehicleType | string, distVal: number) => {
+        // Robust handling for type casing logic/mismatches
+        const p = pricing[type as VehicleType] || pricing[type.toString().toUpperCase() as VehicleType];
+        if (!p) return 0; // Prevent crash if pricing missing
         const basePrice = p.base + (p.perKm * distVal);
         return Math.round(basePrice * surge);
     };
@@ -297,10 +299,11 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
         setTripProgress(0);
         clearSimulation();
 
+        // Ensure we use the Enum value for type to avoid map icon or pricing issues
         const driverStartPos = {
             lat: userLocation.lat - 0.005,
             lng: userLocation.lng - 0.005,
-            type: selectedVehicle || 'Keke',
+            type: selectedVehicle || VehicleType.KEKE,
             heading: 45
         };
         setAssignedDriverPos(null);
