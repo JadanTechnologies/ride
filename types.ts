@@ -90,3 +90,21 @@ export interface AppNotification {
   type: 'info' | 'success' | 'alert';
   message: string;
 }
+
+export interface Pricing {
+  [key: string]: {
+    baseFare: number;
+    perKm: number;
+    perMin: number;
+    isActive: boolean;
+  }
+}
+
+export interface Dispute {
+  id:string;
+  complainant: string;
+  respondent: string;
+  issue: string;
+  status: 'Open' | 'Resolved';
+  date: string;
+}

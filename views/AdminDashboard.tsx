@@ -7,7 +7,7 @@ import * as L from 'leaflet';
 import { Users, Truck, DollarSign, Activity, AlertCircle, Settings, Check, X, Shield, Search, MoreVertical, ArrowUpRight, Zap, Ban, Map as MapIcon, Send, UserPlus, Briefcase, Bike, Bus, Smartphone, Wrench, MessageSquare, AlertTriangle, Box } from 'lucide-react';
 import { CURRENCY, LAGOS_COORDS } from '../constants';
 import { Button } from '../components/Button';
-import { User, Driver, WithdrawalRequest, VehicleType } from '../types';
+import { User, Driver, WithdrawalRequest, VehicleType, Ride, Dispute, Pricing, RideStatus, UserRole } from '../types';
 import AdminSettingsPanel from '../components/AdminSettingsPanel';
 import AdminMapView from '../components/AdminMapView';
 import DeviceTracking from '../components/DeviceTracking';
@@ -22,16 +22,16 @@ import LogisticsManagement from '../components/LogisticsManagement';
 const Leaflet = (L as any).default ?? L;
 
 interface AdminDashboardProps {
-  currentPricing: any;
+  currentPricing: Pricing;
   currentCommission: number;
   currentSurge: number;
   withdrawalRequests: WithdrawalRequest[];
   sessionData: {
     passenger: User;
     driver: Driver;
-    rides: any[];
+    rides: Ride[];
   };
-  onUpdatePricing: (pricing: any) => void;
+  onUpdatePricing: (pricing: Pricing) => void;
   onUpdateCommission: (rate: number) => void;
   onUpdateSurge: (surge: number) => void;
   onUpdateDriverStatus: (status: 'Active' | 'Suspended') => void;
@@ -130,9 +130,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   });
 
   // Initialize with Mocks + Session Data
-  const [drivers, setDrivers] = useState<any[]>([]);
-  const [users, setUsers] = useState<any[]>([]);
-  const [allRides, setAllRides] = useState<any[]>([]);
+  const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [allRides, setAllRides] = useState<Ride[]>([]);
 
   useEffect(() => {
     // Generate some random positions around Lagos for demo
@@ -141,50 +141,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       lng: LAGOS_COORDS.lng + (Math.random() - 0.5) * 0.05
     });
 
-    // Merge Session Driver
-    const sessionDriverFormatted = {
-        id: sessionData.driver.id,
-        name: sessionData.driver.name + " (You)",
-        vehicle: sessionData.driver.vehicleType,
-        status: sessionData.driver.status || "Active",
-        rating: sessionData.driver.rating,
-        isCompany: false,
-        location: getRandomPos()
-    };
+    const mockUsers: User[] = [
+      { id: 'u-1', name: "Chioma Adebayo", email: "chioma@example.com", phone: "08012345678", role: UserRole.PASSENGER, walletBalance: 1500, location: getRandomPos() },
+      { id: 'u-2', name: "John Doe", email: "john@test.com", phone: "08012345679", role: UserRole.PASSENGER, walletBalance: 500, location: getRandomPos() },
+      { id: 'u-3', name: "Sarah Smith", email: "sarah@test.com", phone: "08012345680", role: UserRole.PASSENGER, walletBalance: 12500, location: getRandomPos() },
+    ];
+
+    const mockDrivers: Driver[] = [
+        { id: 'd-1', name: "Ibrahim Musa", vehicleType: VehicleType.KEKE, status: "Active", rating: 4.8, isCompany: true, location: getRandomPos(), email: 'd1@test.com', phone: '123', role: UserRole.DRIVER, walletBalance: 0, vehiclePlate: "ABC-123", isOnline: true, totalRides: 10, earnings: {today: 100, week: 500, month: 2000} },
+        { id: 'd-2', name: "Samuel Okon", vehicleType: VehicleType.OKADA, status: "Pending", rating: 0, isCompany: false, location: getRandomPos(), email: 'd2@test.com', phone: '123', role: UserRole.DRIVER, walletBalance: 0, vehiclePlate: "ABC-123", isOnline: true, totalRides: 10, earnings: {today: 100, week: 500, month: 2000} },
+        { id: 'd-3', name: "Chinedu Eze", vehicleType: VehicleType.BUS, status: "Suspended", rating: 3.2, isCompany: false, location: getRandomPos(), email: 'd3@test.com', phone: '123', role: UserRole.DRIVER, walletBalance: 0, vehiclePlate: "ABC-123", isOnline: true, totalRides: 10, earnings: {today: 100, week: 500, month: 2000} },
+        { id: 'd-4', name: "Yusuf Ali", vehicleType: VehicleType.KEKE, status: "Active", rating: 4.9, isCompany: false, location: getRandomPos(), email: 'd4@test.com', phone: '123', role: UserRole.DRIVER, walletBalance: 0, vehiclePlate: "ABC-123", isOnline: true, totalRides: 10, earnings: {today: 100, week: 500, month: 2000} },
+        { id: 'd-5', name: "Emmanuel Bassey", vehicleType: VehicleType.BUS, status: "Pending", rating: 0, isCompany: false, location: getRandomPos(), email: 'd5@test.com', phone: '123', role: UserRole.DRIVER, walletBalance: 0, vehiclePlate: "ABC-123", isOnline: true, totalRides: 10, earnings: {today: 100, week: 500, month: 2000} },
+    ];
+
+    const mockRides: Ride[] = [
+      { id: 'r-101', passengerId: "u-1", driverId: "d-1", pickupAddress: "Shoprite Ikeja", dropoffAddress: "Maryland Mall", status: RideStatus.IN_PROGRESS, fare: 1200, vehicleType: VehicleType.KEKE, distance: "5km", duration: "10m", createdAt: Date.now() },
+    ];
     
-    setDrivers(prev => {
-        if (prev.length > 5) return prev;
-        return [
-            sessionDriverFormatted,
-            { id: 1, name: "Ibrahim Musa", vehicle: "Keke", status: "Active", rating: 4.8, isCompany: true, location: getRandomPos() },
-            { id: 2, name: "Samuel Okon", vehicle: "Okada", status: "Pending", rating: 0, isCompany: false, location: getRandomPos() },
-            { id: 3, name: "Chinedu Eze", vehicle: "Bus", status: "Suspended", rating: 3.2, isCompany: false, location: getRandomPos() },
-            { id: 4, name: "Yusuf Ali", vehicle: "Keke", status: "Active", rating: 4.9, isCompany: false, location: getRandomPos() },
-            { id: 5, name: "Emmanuel Bassey", vehicle: "Bus", status: "Pending", rating: 0, isCompany: false, location: getRandomPos() },
-        ];
-    });
-
-    // Merge Session User
-    const sessionUserFormatted = {
-        id: sessionData.passenger.id,
-        name: sessionData.passenger.name + " (You)",
-        email: sessionData.passenger.email,
-        rides: sessionData.rides.length,
-        status: "Active",
-        location: getRandomPos()
-    };
-
-    setUsers([
-        sessionUserFormatted,
-        { id: 1, name: "Chioma Adebayo", email: "chioma@example.com", rides: 45, status: "Active", location: getRandomPos() },
-        { id: 2, name: "John Doe", email: "john@test.com", rides: 2, status: "Active", location: getRandomPos() },
-        { id: 3, name: "Sarah Smith", email: "sarah@test.com", rides: 0, status: "Inactive", location: getRandomPos() },
-    ]);
-
-    setAllRides([
-        ...sessionData.rides,
-        { id: 'r-101', passenger: "Chioma Adebayo", driver: "Ibrahim Musa", pickup: "Shoprite Ikeja", dropoff: "Maryland Mall", status: "In Progress", fare: 1200, type: "Keke" },
-    ]);
+    // Merge session data with mocks
+    setDrivers([sessionData.driver, ...mockDrivers]);
+    setUsers([sessionData.passenger, ...mockUsers]);
+    setAllRides([...sessionData.rides, ...mockRides]);
 
   }, [sessionData]);
 
@@ -193,7 +171,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     if (currentView !== 'map') return;
     const interval = setInterval(() => {
       setDrivers(prev => prev.map(d => {
-        if (d.status !== 'Active') return d;
+        if (d.status !== 'Active' || !d.location) return d;
         return {
           ...d,
           location: {
@@ -206,11 +184,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     return () => clearInterval(interval);
   }, [currentView]);
 
-  const [disputes, setDisputes] = useState([
+  const [disputes, setDisputes] = useState<Dispute[]>([
     { id: 'd-001', complainant: "Chioma Adebayo", respondent: "Ibrahim Musa", issue: "Driver requested extra cash", status: "Open", date: "Today, 10:30 AM" },
   ]);
 
-  const [pricingForm, setPricingForm] = useState(currentPricing);
+  const [pricingForm, setPricingForm] = useState<Pricing>(currentPricing);
   const [commissionForm, setCommissionForm] = useState(currentCommission);
   const [surgeForm, setSurgeForm] = useState(currentSurge);
 
@@ -221,32 +199,40 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setBroadcastInput('');
   };
 
-  const handleApproveDriver = (id: number | string) => {
+  const handleApproveDriver = (id: string) => {
     if (id === sessionData.driver.id) onUpdateDriverStatus('Active');
-    setDrivers(drivers.map(d => d.id === id ? { ...d, status: 'Active' } : d));
+    setDrivers(prevDrivers => prevDrivers.map(d => d.id === id ? { ...d, status: 'Active' } : d));
   };
 
-  const handleRejectDriver = (id: number | string) => {
+  const handleRejectDriver = (id: string) => {
     if(confirm("Are you sure you want to reject this application?")) {
-        setDrivers(drivers.filter(d => d.id !== id));
+        setDrivers(prevDrivers => prevDrivers.filter(d => d.id !== id));
     }
   };
 
-  const handleSuspendDriver = (id: number | string) => {
+  const handleSuspendDriver = (id: string) => {
     if (id === sessionData.driver.id) onUpdateDriverStatus('Suspended');
-    setDrivers(drivers.map(d => d.id === id ? { ...d, status: 'Suspended' } : d));
+    setDrivers(prevDrivers => prevDrivers.map(d => d.id === id ? { ...d, status: 'Suspended' } : d));
   };
 
   const handleRecruitSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const newDriver = {
+    const newDriver: Driver = {
         id: `d-${Date.now()}`,
         name: recruitForm.name,
-        vehicle: recruitForm.vehicle,
+        phone: recruitForm.phone,
+        vehicleType: recruitForm.vehicle,
+        vehiclePlate: recruitForm.plate,
         status: 'Active',
         rating: 5.0,
         isCompany: true,
-        location: { lat: LAGOS_COORDS.lat + 0.01, lng: LAGOS_COORDS.lng + 0.01 }
+        location: { lat: LAGOS_COORDS.lat + 0.01, lng: LAGOS_COORDS.lng + 0.01 },
+        email: 'new@recruit.com',
+        role: UserRole.DRIVER,
+        walletBalance: 0,
+        isOnline: true,
+        totalRides: 0,
+        earnings: { today: 0, week: 0, month: 0 }
     };
     setDrivers(prev => [newDriver, ...prev]);
     setShowRecruitModal(false);
@@ -254,22 +240,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setRecruitForm({ name: '', phone: '', vehicle: VehicleType.KEKE, plate: '' });
   };
 
-  const handleDeleteUser = (id: number | string) => {
+  const handleDeleteUser = (id: string) => {
     if(confirm('Are you sure you want to delete this user?')) {
-        setUsers(users.filter(u => u.id !== id));
+        setUsers(prevUsers => prevUsers.filter(u => u.id !== id));
     }
   };
 
   const handleResolveDispute = (id: string) => {
-    setDisputes(disputes.map(d => d.id === id ? { ...d, status: 'Resolved' } : d));
+    setDisputes(prevDisputes => prevDisputes.map(d => d.id === id ? { ...d, status: 'Resolved' } : d));
   };
 
-  const handleUpdatePricing = (type: VehicleType, field: string, value: any) => {
-    setPricingForm((prev: any) => ({
+  const handleUpdatePricing = (type: VehicleType, field: string, value: string | boolean) => {
+    setPricingForm((prev) => ({
       ...prev,
       [type]: {
         ...prev[type],
-        [field]: field === 'isActive' ? value : (parseInt(value) || 0)
+        [field]: field === 'isActive' ? value : (parseInt(value as string) || 0)
       }
     }));
   };
@@ -316,7 +302,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 {filteredDrivers.map((driver) => (
                     <tr key={driver.id} className="hover:bg-gray-50">
                         <td className="p-4 font-medium text-gray-900 flex items-center gap-2">{driver.name}{driver.isCompany && <span className="bg-blue-100 text-blue-700 text-[10px] px-1.5 py-0.5 rounded border border-blue-200">STAFF</span>}</td>
-                        <td className="p-4 text-gray-600 capitalize">{driver.vehicle.toLowerCase()}</td>
+                        <td className="p-4 text-gray-600 capitalize">{driver.vehicleType.toLowerCase()}</td>
                         <td className="p-4 text-gray-500 text-sm">{driver.isCompany ? 'Company Asset' : 'Independent'}</td>
                         <td className="p-4"><span className={`px-2 py-1 rounded text-xs font-bold ${driver.status === 'Active' ? 'bg-green-100 text-green-700' : driver.status === 'Pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>{driver.status}</span></td>
                         <td className="p-4 text-gray-600">★ {driver.rating || '-'}</td>
@@ -353,10 +339,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-6 border-b border-gray-100 flex justify-between items-center"><h3 className="text-lg font-bold text-gray-800">User Management</h3></div>
             <table className="w-full text-left">
-              <thead className="bg-gray-50 text-gray-500 text-sm"><tr><th className="p-4 font-medium">Name</th><th className="p-4 font-medium">Email</th><th className="p-4 font-medium">Status</th><th className="p-4 font-medium text-right">Actions</th></tr></thead>
+              <thead className="bg-gray-50 text-gray-500 text-sm"><tr><th className="p-4 font-medium">Name</th><th className="p-4 font-medium">Email</th><th className="p-4 font-medium">Wallet Balance</th><th className="p-4 font-medium text-right">Actions</th></tr></thead>
               <tbody className="divide-y divide-gray-100">
                 {users.map((u) => (
-                  <tr key={u.id} className="hover:bg-gray-50"><td className="p-4 font-medium text-gray-900">{u.name}</td><td className="p-4 text-gray-600">{u.email}</td><td className="p-4"><span className={`px-2 py-1 rounded text-xs font-bold ${u.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>{u.status}</span></td><td className="p-4 text-right"><button onClick={() => handleDeleteUser(u.id)} className="text-red-500 hover:bg-red-50 p-1.5 rounded"><X size={18}/></button></td></tr>
+                  <tr key={u.id} className="hover:bg-gray-50"><td className="p-4 font-medium text-gray-900">{u.name}</td><td className="p-4 text-gray-600">{u.email}</td><td className="p-4 font-medium text-gray-900">{CURRENCY}{u.walletBalance}</td><td className="p-4 text-right"><button onClick={() => handleDeleteUser(u.id)} className="text-red-500 hover:bg-red-50 p-1.5 rounded"><X size={18}/></button></td></tr>
                 ))}
               </tbody>
             </table>
@@ -370,9 +356,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
              <table className="w-full text-left">
                 <thead className="bg-gray-50 text-gray-500 text-sm"><tr><th className="p-4 font-medium">ID</th><th className="p-4 font-medium">Passenger</th><th className="p-4 font-medium">Driver</th><th className="p-4 font-medium">Status</th><th className="p-4 font-medium text-right">Fare</th></tr></thead>
                 <tbody className="divide-y divide-gray-100">
-                  {allRides.map((ride) => (
-                    <tr key={ride.id} className="hover:bg-gray-50"><td className="p-4 text-xs font-mono text-gray-500">{ride.id.toString().substring(0,8)}...</td><td className="p-4 font-medium text-gray-900">{ride.passenger}</td><td className="p-4 text-gray-600">{ride.driver}</td><td className="p-4"><span className={`px-2 py-1 rounded text-xs font-bold ${ride.status === 'In Progress' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'}`}>{ride.status}</span></td><td className="p-4 text-right font-medium">{CURRENCY}{ride.fare}</td></tr>
-                  ))}
+                  {allRides.map((ride) => {
+                    const passenger = users.find(u => u.id === ride.passengerId);
+                    const driver = drivers.find(d => d.id === ride.driverId);
+                    return (
+                      <tr key={ride.id} className="hover:bg-gray-50"><td className="p-4 text-xs font-mono text-gray-500">{ride.id.toString().substring(0,8)}...</td><td className="p-4 font-medium text-gray-900">{passenger?.name || ride.passengerId}</td><td className="p-4 text-gray-600">{driver?.name || ride.driverId}</td><td className="p-4"><span className={`px-2 py-1 rounded text-xs font-bold ${ride.status === RideStatus.IN_PROGRESS ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'}`}>{ride.status}</span></td><td className="p-4 text-right font-medium">{CURRENCY}{ride.fare}</td></tr>
+                    )
+                  })}
                 </tbody>
              </table>
           </div>
