@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell 
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, AreaChart, Area, Legend
 } from 'recharts';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import * as L from 'leaflet';
-import { Users, Truck, DollarSign, Activity, AlertCircle, Settings, Check, X, Shield, Search, MoreVertical, ArrowUpRight, Zap, Ban, Map as MapIcon, Send, UserPlus, Briefcase, Bike, Bus, Smartphone, Wrench, MessageSquare, AlertTriangle, Box } from 'lucide-react';
+import { Users, Truck, DollarSign, Activity, AlertCircle, Settings, Check, X, Shield, Search, MoreVertical, ArrowUpRight, Zap, Ban, Map as MapIcon, Send, UserPlus, Briefcase, Bike, Bus, Smartphone, Wrench, MessageSquare, AlertTriangle, Box, BarChart2 } from 'lucide-react';
 import { CURRENCY, LAGOS_COORDS } from '../constants';
 import { Button } from '../components/Button';
 import { User, Driver, WithdrawalRequest, VehicleType, Ride, Dispute, Pricing, RideStatus, UserRole, CommissionRates } from '../types';
@@ -58,6 +58,20 @@ const dataVehicles = [
   { name: 'Bus', value: 200 },
 ];
 
+const dataPeakHours = [
+  { time: '06:00', rides: 120 }, { time: '08:00', rides: 300 }, { time: '10:00', rides: 150 },
+  { time: '12:00', rides: 180 }, { time: '14:00', rides: 220 }, { time: '16:00', rides: 250 },
+  { time: '18:00', rides: 400 }, { time: '20:00', rides: 320 }, { time: '22:00', rides: 150 }
+];
+
+const dataDriverPerformance = [
+  { name: 'Ibrahim (Keke)', rating: 4.8, rides: 145 },
+  { name: 'Samuel (Okada)', rating: 4.5, rides: 210 },
+  { name: 'Yusuf (Keke)', rating: 4.9, rides: 180 },
+  { name: 'Chinedu (Bus)', rating: 4.2, rides: 90 },
+  { name: 'Sola (Car)', rating: 4.7, rides: 120 },
+];
+
 const COLORS = ['#10b981', '#f59e0b', '#3b82f6'];
 
 // Custom Icons for Leaflet
@@ -84,21 +98,21 @@ const createIcon = (type: VehicleType | 'USER') => {
   });
 };
 
-type AdminView = 'overview' | 'map' | 'drivers' | 'users' | 'rides' | 'disputes' | 'finance' | 'logistics' | 'settings' | 'devices' | 'apps' | 'support' | 'fraud' | 'usermanagement';
+type AdminView = 'overview' | 'map' | 'drivers' | 'users' | 'rides' | 'disputes' | 'finance' | 'logistics' | 'settings' | 'devices' | 'apps' | 'support' | 'fraud' | 'usermanagement' | 'analytics';
 
-export const AdminDashboard: React.FC<AdminDashboardProps> = ({ 
-  currentPricing, 
+export const AdminDashboard: React.FC<AdminDashboardProps> = ({
+  currentPricing,
   currentCommission,
   currentSurge,
   withdrawalRequests,
   sessionData,
-  onUpdatePricing, 
+  onUpdatePricing,
   onUpdateCommission,
   onUpdateSurge,
   onUpdateDriverStatus,
   onProcessWithdrawal,
   onBroadcast,
-  onLogout 
+  onLogout
 }) => {
   const [currentView, setCurrentView] = useState<AdminView>('overview');
   const [broadcastInput, setBroadcastInput] = useState('');
@@ -107,6 +121,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const navItems = [
     { id: 'overview', label: 'Dashboard', icon: <Activity size={20} />, onClick: () => setCurrentView('overview') },
     { id: 'map', label: 'Live Map', icon: <MapIcon size={20} />, onClick: () => setCurrentView('map') },
+    { id: 'analytics', label: 'Analytics', icon: <BarChart2 size={20} />, onClick: () => setCurrentView('analytics') },
     { id: 'rides', label: 'Rides', icon: <Truck size={20} />, onClick: () => setCurrentView('rides') },
     { id: 'drivers', label: 'Drivers', icon: <Briefcase size={20} />, onClick: () => setCurrentView('drivers') },
     { id: 'users', label: 'Users', icon: <Users size={20} />, onClick: () => setCurrentView('users') },
@@ -150,17 +165,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     ];
 
     const mockDrivers: Driver[] = [
-        { id: 'd-1', name: "Ibrahim Musa", vehicleType: VehicleType.KEKE, status: "Active", rating: 4.8, isCompany: true, location: getRandomPos(), email: 'd1@test.com', phone: '123', role: UserRole.DRIVER, walletBalance: 0, vehiclePlate: "ABC-123", isOnline: true, totalRides: 10, earnings: {today: 100, week: 500, month: 2000} },
-        { id: 'd-2', name: "Samuel Okon", vehicleType: VehicleType.OKADA, status: "Pending", rating: 0, isCompany: false, location: getRandomPos(), email: 'd2@test.com', phone: '123', role: UserRole.DRIVER, walletBalance: 0, vehiclePlate: "ABC-123", isOnline: true, totalRides: 10, earnings: {today: 100, week: 500, month: 2000} },
-        { id: 'd-3', name: "Chinedu Eze", vehicleType: VehicleType.BUS, status: "Suspended", rating: 3.2, isCompany: false, location: getRandomPos(), email: 'd3@test.com', phone: '123', role: UserRole.DRIVER, walletBalance: 0, vehiclePlate: "ABC-123", isOnline: true, totalRides: 10, earnings: {today: 100, week: 500, month: 2000} },
-        { id: 'd-4', name: "Yusuf Ali", vehicleType: VehicleType.KEKE, status: "Active", rating: 4.9, isCompany: false, location: getRandomPos(), email: 'd4@test.com', phone: '123', role: UserRole.DRIVER, walletBalance: 0, vehiclePlate: "ABC-123", isOnline: true, totalRides: 10, earnings: {today: 100, week: 500, month: 2000} },
-        { id: 'd-5', name: "Emmanuel Bassey", vehicleType: VehicleType.BUS, status: "Pending", rating: 0, isCompany: false, location: getRandomPos(), email: 'd5@test.com', phone: '123', role: UserRole.DRIVER, walletBalance: 0, vehiclePlate: "ABC-123", isOnline: true, totalRides: 10, earnings: {today: 100, week: 500, month: 2000} },
+      { id: 'd-1', name: "Ibrahim Musa", vehicleType: VehicleType.KEKE, status: "Active", rating: 4.8, isCompany: true, location: getRandomPos(), email: 'd1@test.com', phone: '123', role: UserRole.DRIVER, walletBalance: 0, vehiclePlate: "ABC-123", isOnline: true, totalRides: 10, earnings: { today: 100, week: 500, month: 2000 } },
+      { id: 'd-2', name: "Samuel Okon", vehicleType: VehicleType.OKADA, status: "Pending", rating: 0, isCompany: false, location: getRandomPos(), email: 'd2@test.com', phone: '123', role: UserRole.DRIVER, walletBalance: 0, vehiclePlate: "ABC-123", isOnline: true, totalRides: 10, earnings: { today: 100, week: 500, month: 2000 } },
+      { id: 'd-3', name: "Chinedu Eze", vehicleType: VehicleType.BUS, status: "Suspended", rating: 3.2, isCompany: false, location: getRandomPos(), email: 'd3@test.com', phone: '123', role: UserRole.DRIVER, walletBalance: 0, vehiclePlate: "ABC-123", isOnline: true, totalRides: 10, earnings: { today: 100, week: 500, month: 2000 } },
+      { id: 'd-4', name: "Yusuf Ali", vehicleType: VehicleType.KEKE, status: "Active", rating: 4.9, isCompany: false, location: getRandomPos(), email: 'd4@test.com', phone: '123', role: UserRole.DRIVER, walletBalance: 0, vehiclePlate: "ABC-123", isOnline: true, totalRides: 10, earnings: { today: 100, week: 500, month: 2000 } },
+      { id: 'd-5', name: "Emmanuel Bassey", vehicleType: VehicleType.BUS, status: "Pending", rating: 0, isCompany: false, location: getRandomPos(), email: 'd5@test.com', phone: '123', role: UserRole.DRIVER, walletBalance: 0, vehiclePlate: "ABC-123", isOnline: true, totalRides: 10, earnings: { today: 100, week: 500, month: 2000 } },
     ];
 
     const mockRides: Ride[] = [
       { id: 'r-101', passengerId: "u-1", driverId: "d-1", pickupAddress: "Shoprite Ikeja", dropoffAddress: "Maryland Mall", status: RideStatus.IN_PROGRESS, fare: 1200, vehicleType: VehicleType.KEKE, distance: "5km", duration: "10m", createdAt: Date.now() },
     ];
-    
+
     // Merge session data with mocks
     setDrivers([sessionData.driver, ...mockDrivers]);
     setUsers([sessionData.passenger, ...mockUsers]);
@@ -196,7 +211,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   // -- Actions --
   const handleBroadcast = () => {
-    if(!broadcastInput.trim()) return;
+    if (!broadcastInput.trim()) return;
     onBroadcast(broadcastInput);
     setBroadcastInput('');
   };
@@ -207,8 +222,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   };
 
   const handleRejectDriver = (id: string) => {
-    if(confirm("Are you sure you want to reject this application?")) {
-        setDrivers(prevDrivers => prevDrivers.filter(d => d.id !== id));
+    if (confirm("Are you sure you want to reject this application?")) {
+      setDrivers(prevDrivers => prevDrivers.filter(d => d.id !== id));
     }
   };
 
@@ -220,21 +235,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const handleRecruitSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const newDriver: Driver = {
-        id: `d-${Date.now()}`,
-        name: recruitForm.name,
-        phone: recruitForm.phone,
-        vehicleType: recruitForm.vehicle,
-        vehiclePlate: recruitForm.plate,
-        status: 'Active',
-        rating: 5.0,
-        isCompany: true,
-        location: { lat: LAGOS_COORDS.lat + 0.01, lng: LAGOS_COORDS.lng + 0.01 },
-        email: 'new@recruit.com',
-        role: UserRole.DRIVER,
-        walletBalance: 0,
-        isOnline: true,
-        totalRides: 0,
-        earnings: { today: 0, week: 0, month: 0 }
+      id: `d-${Date.now()}`,
+      name: recruitForm.name,
+      phone: recruitForm.phone,
+      vehicleType: recruitForm.vehicle,
+      vehiclePlate: recruitForm.plate,
+      status: 'Active',
+      rating: 5.0,
+      isCompany: true,
+      location: { lat: LAGOS_COORDS.lat + 0.01, lng: LAGOS_COORDS.lng + 0.01 },
+      email: 'new@recruit.com',
+      role: UserRole.DRIVER,
+      walletBalance: 0,
+      isOnline: true,
+      totalRides: 0,
+      earnings: { today: 0, week: 0, month: 0 }
     };
     setDrivers(prev => [newDriver, ...prev]);
     setShowRecruitModal(false);
@@ -243,8 +258,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   };
 
   const handleDeleteUser = (id: string) => {
-    if(confirm('Are you sure you want to delete this user?')) {
-        setUsers(prevUsers => prevUsers.filter(u => u.id !== id));
+    if (confirm('Are you sure you want to delete this user?')) {
+      setUsers(prevUsers => prevUsers.filter(u => u.id !== id));
     }
   };
 
@@ -271,7 +286,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const pendingWithdrawalsCount = withdrawalRequests.filter(w => w.status === 'Pending').length;
 
   const renderContent = () => {
-    switch(currentView) {
+    switch (currentView) {
       case 'map':
         return (
           <div className="h-[calc(100vh-12rem)]">
@@ -281,70 +296,70 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
       case 'drivers':
         const filteredDrivers = drivers.filter(d => {
-            if (driverTab === 'active') return d.status === 'Active' || d.status === 'Suspended';
-            return d.status === 'Pending';
+          if (driverTab === 'active') return d.status === 'Active' || d.status === 'Suspended';
+          return d.status === 'Pending';
         });
         return (
           <>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-h-[500px]">
-            {/* Driver Table Content */}
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <div>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-h-[500px]">
+              {/* Driver Table Content */}
+              <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                <div>
                   <h3 className="text-lg font-bold text-gray-800">Driver Management</h3>
                   <div className="flex gap-4 mt-2">
                     <button onClick={() => setDriverTab('active')} className={`text-sm font-medium pb-1 border-b-2 transition-colors ${driverTab === 'active' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>Active Fleet</button>
                     <button onClick={() => setDriverTab('pending')} className={`text-sm font-medium pb-1 border-b-2 transition-colors ${driverTab === 'pending' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>Applications ({drivers.filter(d => d.status === 'Pending').length})</button>
                   </div>
+                </div>
+                <Button onClick={() => setShowRecruitModal(true)} variant="primary" className="py-2 text-sm flex items-center gap-2"><UserPlus size={16} /> Recruit Driver</Button>
               </div>
-              <Button onClick={() => setShowRecruitModal(true)} variant="primary" className="py-2 text-sm flex items-center gap-2"><UserPlus size={16} /> Recruit Driver</Button>
-            </div>
-            <table className="w-full text-left">
-              <thead className="bg-gray-50 text-gray-500 text-sm"><tr><th className="p-4 font-medium">Name</th><th className="p-4 font-medium">Vehicle</th><th className="p-4 font-medium">Type</th><th className="p-4 font-medium">Status</th><th className="p-4 font-medium">Rating</th><th className="p-4 font-medium text-right">Actions</th></tr></thead>
-              <tbody className="divide-y divide-gray-100">
-                {filteredDrivers.map((driver) => (
+              <table className="w-full text-left">
+                <thead className="bg-gray-50 text-gray-500 text-sm"><tr><th className="p-4 font-medium">Name</th><th className="p-4 font-medium">Vehicle</th><th className="p-4 font-medium">Type</th><th className="p-4 font-medium">Status</th><th className="p-4 font-medium">Rating</th><th className="p-4 font-medium text-right">Actions</th></tr></thead>
+                <tbody className="divide-y divide-gray-100">
+                  {filteredDrivers.map((driver) => (
                     <tr key={driver.id} className="hover:bg-gray-50">
-                        <td className="p-4 font-medium text-gray-900 flex items-center gap-2">{driver.name}{driver.isCompany && <span className="bg-blue-100 text-blue-700 text-[10px] px-1.5 py-0.5 rounded border border-blue-200">STAFF</span>}</td>
-                        <td className="p-4 text-gray-600 capitalize">{driver.vehicleType.toLowerCase()}</td>
-                        <td className="p-4 text-gray-500 text-sm">{driver.isCompany ? 'Company Asset' : 'Independent'}</td>
-                        <td className="p-4"><span className={`px-2 py-1 rounded text-xs font-bold ${driver.status === 'Active' ? 'bg-green-100 text-green-700' : driver.status === 'Pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>{driver.status}</span></td>
-                        <td className="p-4 text-gray-600">★ {driver.rating || '-'}</td>
-                        <td className="p-4 text-right space-x-2">
-                        {driver.status === 'Pending' && (<><button onClick={() => handleApproveDriver(driver.id)} className="text-green-600 hover:bg-green-50 p-1.5 rounded"><Check size={18}/></button><button onClick={() => handleRejectDriver(driver.id)} className="text-red-500 hover:bg-red-50 p-1.5 rounded"><X size={18}/></button></>)}
-                        {driver.status === 'Active' && (<button onClick={() => handleSuspendDriver(driver.id)} className="text-red-500 hover:bg-red-50 p-1.5 rounded"><Ban size={18}/></button>)}
-                        </td>
+                      <td className="p-4 font-medium text-gray-900 flex items-center gap-2">{driver.name}{driver.isCompany && <span className="bg-blue-100 text-blue-700 text-[10px] px-1.5 py-0.5 rounded border border-blue-200">STAFF</span>}</td>
+                      <td className="p-4 text-gray-600 capitalize">{driver.vehicleType.toLowerCase()}</td>
+                      <td className="p-4 text-gray-500 text-sm">{driver.isCompany ? 'Company Asset' : 'Independent'}</td>
+                      <td className="p-4"><span className={`px-2 py-1 rounded text-xs font-bold ${driver.status === 'Active' ? 'bg-green-100 text-green-700' : driver.status === 'Pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>{driver.status}</span></td>
+                      <td className="p-4 text-gray-600">★ {driver.rating || '-'}</td>
+                      <td className="p-4 text-right space-x-2">
+                        {driver.status === 'Pending' && (<><button onClick={() => handleApproveDriver(driver.id)} className="text-green-600 hover:bg-green-50 p-1.5 rounded"><Check size={18} /></button><button onClick={() => handleRejectDriver(driver.id)} className="text-red-500 hover:bg-red-50 p-1.5 rounded"><X size={18} /></button></>)}
+                        {driver.status === 'Active' && (<button onClick={() => handleSuspendDriver(driver.id)} className="text-red-500 hover:bg-red-50 p-1.5 rounded"><Ban size={18} /></button>)}
+                      </td>
                     </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {showRecruitModal && (
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {showRecruitModal && (
               <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
-                  <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 animate-in zoom-in-95">
-                      <div className="flex justify-between items-center mb-6"><h3 className="text-xl font-bold text-gray-900 flex items-center gap-2"><Briefcase className="text-brand-600" /> Recruit Company Driver</h3><button onClick={() => setShowRecruitModal(false)} className="p-2 hover:bg-gray-100 rounded-full"><X size={20} /></button></div>
-                      <form onSubmit={handleRecruitSubmit} className="space-y-4">
-                          <input required type="text" value={recruitForm.name} onChange={e => setRecruitForm({...recruitForm, name: e.target.value})} className="w-full p-2 border border-gray-300 rounded-lg" placeholder="Full Name" />
-                          <input required type="tel" value={recruitForm.phone} onChange={e => setRecruitForm({...recruitForm, phone: e.target.value})} className="w-full p-2 border border-gray-300 rounded-lg" placeholder="Phone Number" />
-                          <div className="grid grid-cols-2 gap-4">
-                              <select value={recruitForm.vehicle} onChange={e => setRecruitForm({...recruitForm, vehicle: e.target.value as VehicleType})} className="w-full p-2 border border-gray-300 rounded-lg"><option value={VehicleType.KEKE}>Keke</option><option value={VehicleType.OKADA}>Okada</option><option value={VehicleType.BUS}>Bus</option></select>
-                              <input required type="text" value={recruitForm.plate} onChange={e => setRecruitForm({...recruitForm, plate: e.target.value})} className="w-full p-2 border border-gray-300 rounded-lg" placeholder="Plate Number" />
-                          </div>
-                          <div className="flex gap-3 pt-2"><Button type="button" variant="secondary" className="flex-1" onClick={() => setShowRecruitModal(false)}>Cancel</Button><Button type="submit" className="flex-1">Recruit Driver</Button></div>
-                      </form>
-                  </div>
+                <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 animate-in zoom-in-95">
+                  <div className="flex justify-between items-center mb-6"><h3 className="text-xl font-bold text-gray-900 flex items-center gap-2"><Briefcase className="text-brand-600" /> Recruit Company Driver</h3><button onClick={() => setShowRecruitModal(false)} className="p-2 hover:bg-gray-100 rounded-full"><X size={20} /></button></div>
+                  <form onSubmit={handleRecruitSubmit} className="space-y-4">
+                    <input required type="text" value={recruitForm.name} onChange={e => setRecruitForm({ ...recruitForm, name: e.target.value })} className="w-full p-2 border border-gray-300 rounded-lg" placeholder="Full Name" />
+                    <input required type="tel" value={recruitForm.phone} onChange={e => setRecruitForm({ ...recruitForm, phone: e.target.value })} className="w-full p-2 border border-gray-300 rounded-lg" placeholder="Phone Number" />
+                    <div className="grid grid-cols-2 gap-4">
+                      <select value={recruitForm.vehicle} onChange={e => setRecruitForm({ ...recruitForm, vehicle: e.target.value as VehicleType })} className="w-full p-2 border border-gray-300 rounded-lg"><option value={VehicleType.KEKE}>Keke</option><option value={VehicleType.OKADA}>Okada</option><option value={VehicleType.BUS}>Bus</option></select>
+                      <input required type="text" value={recruitForm.plate} onChange={e => setRecruitForm({ ...recruitForm, plate: e.target.value })} className="w-full p-2 border border-gray-300 rounded-lg" placeholder="Plate Number" />
+                    </div>
+                    <div className="flex gap-3 pt-2"><Button type="button" variant="secondary" className="flex-1" onClick={() => setShowRecruitModal(false)}>Cancel</Button><Button type="submit" className="flex-1">Recruit Driver</Button></div>
+                  </form>
+                </div>
               </div>
-          )}
+            )}
           </>
         );
 
       case 'users':
         return (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-6 border-b border-gray-100 flex justify-between items-center"><h3 className="text-lg font-bold text-gray-800">User Management</h3></div>
             <table className="w-full text-left">
               <thead className="bg-gray-50 text-gray-500 text-sm"><tr><th className="p-4 font-medium">Name</th><th className="p-4 font-medium">Email</th><th className="p-4 font-medium">Wallet Balance</th><th className="p-4 font-medium text-right">Actions</th></tr></thead>
               <tbody className="divide-y divide-gray-100">
                 {users.map((u) => (
-                  <tr key={u.id} className="hover:bg-gray-50"><td className="p-4 font-medium text-gray-900">{u.name}</td><td className="p-4 text-gray-600">{u.email}</td><td className="p-4 font-medium text-gray-900">{CURRENCY}{u.walletBalance}</td><td className="p-4 text-right"><button onClick={() => handleDeleteUser(u.id)} className="text-red-500 hover:bg-red-50 p-1.5 rounded"><X size={18}/></button></td></tr>
+                  <tr key={u.id} className="hover:bg-gray-50"><td className="p-4 font-medium text-gray-900">{u.name}</td><td className="p-4 text-gray-600">{u.email}</td><td className="p-4 font-medium text-gray-900">{CURRENCY}{u.walletBalance}</td><td className="p-4 text-right"><button onClick={() => handleDeleteUser(u.id)} className="text-red-500 hover:bg-red-50 p-1.5 rounded"><X size={18} /></button></td></tr>
                 ))}
               </tbody>
             </table>
@@ -354,35 +369,35 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       case 'rides':
         return (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-             <div className="p-6 border-b border-gray-100 flex justify-between items-center"><h3 className="text-lg font-bold text-gray-800">Ride Monitoring</h3></div>
-             <table className="w-full text-left">
-                <thead className="bg-gray-50 text-gray-500 text-sm"><tr><th className="p-4 font-medium">ID</th><th className="p-4 font-medium">Passenger</th><th className="p-4 font-medium">Driver</th><th className="p-4 font-medium">Status</th><th className="p-4 font-medium text-right">Fare</th></tr></thead>
-                <tbody className="divide-y divide-gray-100">
-                  {allRides.map((ride) => {
-                    const passenger = users.find(u => u.id === ride.passengerId);
-                    const driver = drivers.find(d => d.id === ride.driverId);
-                    return (
-                      <tr key={ride.id} className="hover:bg-gray-50"><td className="p-4 text-xs font-mono text-gray-500">{ride.id.toString().substring(0,8)}...</td><td className="p-4 font-medium text-gray-900">{passenger?.name || ride.passengerId}</td><td className="p-4 text-gray-600">{driver?.name || ride.driverId}</td><td className="p-4"><span className={`px-2 py-1 rounded text-xs font-bold ${ride.status === RideStatus.IN_PROGRESS ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'}`}>{ride.status}</span></td><td className="p-4 text-right font-medium">{CURRENCY}{ride.fare}</td></tr>
-                    )
-                  })}
-                </tbody>
-             </table>
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center"><h3 className="text-lg font-bold text-gray-800">Ride Monitoring</h3></div>
+            <table className="w-full text-left">
+              <thead className="bg-gray-50 text-gray-500 text-sm"><tr><th className="p-4 font-medium">ID</th><th className="p-4 font-medium">Passenger</th><th className="p-4 font-medium">Driver</th><th className="p-4 font-medium">Status</th><th className="p-4 font-medium text-right">Fare</th></tr></thead>
+              <tbody className="divide-y divide-gray-100">
+                {allRides.map((ride) => {
+                  const passenger = users.find(u => u.id === ride.passengerId);
+                  const driver = drivers.find(d => d.id === ride.driverId);
+                  return (
+                    <tr key={ride.id} className="hover:bg-gray-50"><td className="p-4 text-xs font-mono text-gray-500">{ride.id.toString().substring(0, 8)}...</td><td className="p-4 font-medium text-gray-900">{passenger?.name || ride.passengerId}</td><td className="p-4 text-gray-600">{driver?.name || ride.driverId}</td><td className="p-4"><span className={`px-2 py-1 rounded text-xs font-bold ${ride.status === RideStatus.IN_PROGRESS ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'}`}>{ride.status}</span></td><td className="p-4 text-right font-medium">{CURRENCY}{ride.fare}</td></tr>
+                  )
+                })}
+              </tbody>
+            </table>
           </div>
         );
 
       case 'disputes':
         return (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-             <div className="p-6 border-b border-gray-100 flex justify-between items-center"><h3 className="text-lg font-bold text-gray-800">Disputes</h3></div>
-             {/* Disputes table */}
-             <table className="w-full text-left">
-                <thead className="bg-gray-50 text-gray-500 text-sm"><tr><th className="p-4 font-medium">ID</th><th className="p-4 font-medium">Details</th><th className="p-4 font-medium">Status</th><th className="p-4 font-medium text-right">Action</th></tr></thead>
-                <tbody className="divide-y divide-gray-100">
-                   {disputes.map((d) => (
-                      <tr key={d.id} className="hover:bg-gray-50"><td className="p-4 text-xs font-mono text-gray-500">{d.id}</td><td className="p-4"><p className="font-bold">{d.issue}</p><p className="text-xs text-gray-500">{d.complainant} vs {d.respondent}</p></td><td className="p-4"><span className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold">{d.status}</span></td><td className="p-4 text-right">{d.status === 'Open' && <Button onClick={() => handleResolveDispute(d.id)} variant="secondary" className="py-1 px-2 text-xs">Resolve</Button>}</td></tr>
-                   ))}
-                </tbody>
-             </table>
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center"><h3 className="text-lg font-bold text-gray-800">Disputes</h3></div>
+            {/* Disputes table */}
+            <table className="w-full text-left">
+              <thead className="bg-gray-50 text-gray-500 text-sm"><tr><th className="p-4 font-medium">ID</th><th className="p-4 font-medium">Details</th><th className="p-4 font-medium">Status</th><th className="p-4 font-medium text-right">Action</th></tr></thead>
+              <tbody className="divide-y divide-gray-100">
+                {disputes.map((d) => (
+                  <tr key={d.id} className="hover:bg-gray-50"><td className="p-4 text-xs font-mono text-gray-500">{d.id}</td><td className="p-4"><p className="font-bold">{d.issue}</p><p className="text-xs text-gray-500">{d.complainant} vs {d.respondent}</p></td><td className="p-4"><span className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold">{d.status}</span></td><td className="p-4 text-right">{d.status === 'Open' && <Button onClick={() => handleResolveDispute(d.id)} variant="secondary" className="py-1 px-2 text-xs">Resolve</Button>}</td></tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         );
 
@@ -393,7 +408,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         return <LogisticsManagement />;
 
       case 'settings':
-        return <AdminSettingsPanel 
+        return <AdminSettingsPanel
           currentCommission={currentCommission}
           onUpdateCommission={onUpdateCommission}
           currentPricing={currentPricing}
@@ -420,7 +435,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <h3 className="text-lg font-bold text-gray-800">Fraud Detection & Monitoring</h3>
               </div>
               <p className="text-gray-600 mb-4">Automated fraud detection service is running. Suspicious activities are tracked and logged automatically.</p>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-red-50 border border-red-200 p-4 rounded-lg">
                   <p className="text-sm text-red-800 font-semibold mb-1">Critical Alerts</p>
@@ -436,7 +451,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
               <h4 className="font-bold text-gray-800 mb-4">Recent Alerts</h4>
               <div className="space-y-3">
@@ -451,16 +466,79 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       <p className="text-sm text-gray-600">{alert.type}</p>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className={`px-3 py-1 rounded text-xs font-semibold ${
-                        alert.risk === 'CRITICAL' ? 'bg-red-100 text-red-700' :
+                      <span className={`px-3 py-1 rounded text-xs font-semibold ${alert.risk === 'CRITICAL' ? 'bg-red-100 text-red-700' :
                         alert.risk === 'HIGH' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-blue-100 text-blue-700'
-                      }`}>{alert.risk}</span>
+                          'bg-blue-100 text-blue-700'
+                        }`}>{alert.risk}</span>
                       <span className="text-xs text-gray-500">{alert.time}</span>
                       <button className="text-blue-600 hover:bg-blue-50 px-2 py-1 rounded">Review</button>
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          </div>
+        );
+
+
+
+      case 'analytics':
+        return (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-96">
+                <h3 className="text-lg font-bold text-gray-800 mb-4">Peak Use Hours</h3>
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={dataPeakHours}>
+                    <defs>
+                      <linearGradient id="colorRides" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
+                        <stop offset="95%" stopColor="#8884d8" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="time" />
+                    <YAxis />
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <Tooltip />
+                    <Area type="monotone" dataKey="rides" stroke="#8884d8" fillOpacity={1} fill="url(#colorRides)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-96">
+                <h3 className="text-lg font-bold text-gray-800 mb-4">Top Driver Performance</h3>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart layout="vertical" data={dataDriverPerformance} margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis type="number" />
+                    <YAxis dataKey="name" type="category" width={100} />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="rides" fill="#8884d8" name="Total Rides" />
+                    <Bar dataKey="rating" fill="#82ca9d" name="Rating (x100)" stackId="a" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+              <h3 className="text-lg font-bold text-gray-800 mb-4">Platform Insights</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="p-4 bg-purple-50 rounded-lg">
+                  <p className="text-sm text-purple-700 font-semibold uppercase">Retention Rate</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-2">85%</p>
+                  <p className="text-xs text-gray-500 mt-1">Users returning within 30 days</p>
+                </div>
+                <div className="p-4 bg-orange-50 rounded-lg">
+                  <p className="text-sm text-orange-700 font-semibold uppercase">Avg Trip Time</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-2">18m</p>
+                  <p className="text-xs text-gray-500 mt-1">-2m vs last month</p>
+                </div>
+                <div className="p-4 bg-green-50 rounded-lg">
+                  <p className="text-sm text-green-700 font-semibold uppercase">Surge Efficiency</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-2">92%</p>
+                  <p className="text-xs text-gray-500 mt-1">Requests fulfilled during surge</p>
+                </div>
               </div>
             </div>
           </div>
@@ -474,8 +552,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <>
             {/* Overview Content */}
             <div className="bg-brand-900 text-white p-6 rounded-xl shadow-lg mb-8 relative overflow-hidden">
-               <div className="absolute top-0 right-0 p-12 opacity-10 transform rotate-12"><Send size={120} /></div>
-               <div className="relative z-10"><h3 className="text-xl font-bold mb-2">Broadcast Announcement</h3><div className="flex gap-2 max-w-lg"><input type="text" value={broadcastInput} onChange={(e) => setBroadcastInput(e.target.value)} placeholder="Type message..." className="flex-1 px-4 py-2 rounded-lg text-black" /><button onClick={handleBroadcast} className="bg-brand-500 hover:bg-brand-400 px-6 py-2 rounded-lg font-bold">Send</button></div></div>
+              <div className="absolute top-0 right-0 p-12 opacity-10 transform rotate-12"><Send size={120} /></div>
+              <div className="relative z-10"><h3 className="text-xl font-bold mb-2">Broadcast Announcement</h3><div className="flex gap-2 max-w-lg"><input type="text" value={broadcastInput} onChange={(e) => setBroadcastInput(e.target.value)} placeholder="Type message..." className="flex-1 px-4 py-2 rounded-lg text-black" /><button onClick={handleBroadcast} className="bg-brand-500 hover:bg-brand-400 px-6 py-2 rounded-lg font-bold">Send</button></div></div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
               <div onClick={() => setCurrentView('finance')} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-md"><div className="flex justify-between"><h3 className="text-2xl font-bold">{CURRENCY}12.4M</h3><DollarSign className="text-green-500" /></div><p className="text-sm text-gray-500">Revenue</p></div>
