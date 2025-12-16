@@ -622,6 +622,7 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
                             )}
 
                             {bookingStep === 'confirm' && (
+                                <div className="space-y-4">
                                     <div className="flex gap-4 mt-6">
                                         <div className="flex-1 flex items-center gap-2 p-3 bg-gray-50 rounded-lg cursor-pointer border border-transparent hover:border-gray-200">
                                             <CreditCard className="w-5 h-5 text-gray-500" />
@@ -631,219 +632,217 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
                                             <span className="text-sm">Promo Code</span>
                                         </div>
                                     </div>
-                                    <Button className="w-full" disabled={!selectedVehicle} onClick={handleBookRide}>
-                                        Confirm {selectedVehicle ? selectedVehicle.toLowerCase() : 'Ride'}
-                                    </Button>
+                                    {/* Redundant button removed as we added Book Now/Negotiate buttons above */}
                                 </div>
-                    )}
-                </div>
+                            )}
+                        </div>
                     )}
 
-                {/* ... Rest of components (trip, history, wallet) identical to previous input ... */}
-                {viewState === 'trip' && (
-                    <div className="bg-white md:rounded-2xl shadow-2xl overflow-hidden">
-                        {tripStatus === 'searching' && (
-                            <div className="p-8 flex flex-col items-center justify-center space-y-6 animate-in fade-in duration-300">
-                                <div className="relative">
-                                    <div className="absolute inset-0 bg-brand-500 rounded-full animate-ping opacity-20"></div>
-                                    <div className="w-20 h-20 bg-brand-100 rounded-full flex items-center justify-center relative z-10">
-                                        <Navigation className="w-8 h-8 text-brand-600" />
+                    {/* ... Rest of components (trip, history, wallet) identical to previous input ... */}
+                    {viewState === 'trip' && (
+                        <div className="bg-white md:rounded-2xl shadow-2xl overflow-hidden">
+                            {tripStatus === 'searching' && (
+                                <div className="p-8 flex flex-col items-center justify-center space-y-6 animate-in fade-in duration-300">
+                                    <div className="relative">
+                                        <div className="absolute inset-0 bg-brand-500 rounded-full animate-ping opacity-20"></div>
+                                        <div className="w-20 h-20 bg-brand-100 rounded-full flex items-center justify-center relative z-10">
+                                            <Navigation className="w-8 h-8 text-brand-600" />
+                                        </div>
+                                    </div>
+                                    <div className="text-center">
+                                        <h3 className="text-lg font-bold">Connecting you...</h3>
+                                        <p className="text-gray-500 text-sm mt-1">Finding the nearest available driver</p>
+                                    </div>
+                                    <div className="w-full pt-4">
+                                        <Button variant="danger" className="w-full py-3 text-lg font-bold shadow-md" onClick={handleCancelRide}>
+                                            Cancel Request
+                                        </Button>
                                     </div>
                                 </div>
-                                <div className="text-center">
-                                    <h3 className="text-lg font-bold">Connecting you...</h3>
-                                    <p className="text-gray-500 text-sm mt-1">Finding the nearest available driver</p>
-                                </div>
-                                <div className="w-full pt-4">
-                                    <Button variant="danger" className="w-full py-3 text-lg font-bold shadow-md" onClick={handleCancelRide}>
-                                        Cancel Request
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
+                            )}
 
-                        {(tripStatus === 'arriving' || tripStatus === 'arrived' || tripStatus === 'in_progress') && (
-                            <div className="animate-in slide-in-from-bottom duration-500">
-                                <div className="bg-slate-900 text-white p-4">
-                                    <h3 className="text-lg font-bold text-center">
-                                        {tripStatus === 'arriving' && 'Driver is arriving'}
-                                        {tripStatus === 'arrived' && 'Driver is here'}
-                                        {tripStatus === 'in_progress' && 'Heading to Destination'}
-                                    </h3>
-                                    <p className="text-center text-slate-400 text-sm">
-                                        {tripStatus === 'arriving' && '3 mins away'}
-                                        {tripStatus === 'arrived' && 'Please meet at pickup'}
-                                        {tripStatus === 'in_progress' && 'Sit back and relax'}
-                                    </p>
-                                </div>
-                                <div className="p-6">
-                                    {tripStatus === 'in_progress' && (
-                                        <div className="bg-brand-50 border border-brand-100 p-4 rounded-xl mb-6 flex items-center justify-between shadow-sm animate-in zoom-in duration-300">
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2 bg-brand-100 text-brand-700 rounded-full">
-                                                    <Timer size={24} />
+                            {(tripStatus === 'arriving' || tripStatus === 'arrived' || tripStatus === 'in_progress') && (
+                                <div className="animate-in slide-in-from-bottom duration-500">
+                                    <div className="bg-slate-900 text-white p-4">
+                                        <h3 className="text-lg font-bold text-center">
+                                            {tripStatus === 'arriving' && 'Driver is arriving'}
+                                            {tripStatus === 'arrived' && 'Driver is here'}
+                                            {tripStatus === 'in_progress' && 'Heading to Destination'}
+                                        </h3>
+                                        <p className="text-center text-slate-400 text-sm">
+                                            {tripStatus === 'arriving' && '3 mins away'}
+                                            {tripStatus === 'arrived' && 'Please meet at pickup'}
+                                            {tripStatus === 'in_progress' && 'Sit back and relax'}
+                                        </p>
+                                    </div>
+                                    <div className="p-6">
+                                        {tripStatus === 'in_progress' && (
+                                            <div className="bg-brand-50 border border-brand-100 p-4 rounded-xl mb-6 flex items-center justify-between shadow-sm animate-in zoom-in duration-300">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-2 bg-brand-100 text-brand-700 rounded-full">
+                                                        <Timer size={24} />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs text-brand-600 font-bold uppercase tracking-wider">Estimated Arrival</p>
+                                                        <div className="flex items-baseline gap-2">
+                                                            <p className="text-2xl font-bold text-brand-900">
+                                                                {Math.max(1, Math.ceil((parseInt(estimatedRide?.duration || "15") || 15) * (1 - tripProgress / 100)))} mins
+                                                            </p>
+                                                            <span className="text-sm text-brand-700 font-medium bg-brand-100 px-2 py-0.5 rounded">
+                                                                {(() => {
+                                                                    const minsRemaining = Math.max(1, Math.ceil((parseInt(estimatedRide?.duration || "15") || 15) * (1 - tripProgress / 100)));
+                                                                    const arrivalTime = new Date(Date.now() + minsRemaining * 60000);
+                                                                    return arrivalTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+                                                                })()}
+                                                            </span>
+                                                        </div>
+                                                    </div>
                                                 </div>
+                                                <div className="text-right">
+                                                    <div className="flex items-center justify-end gap-1 text-gray-500 mb-1">
+                                                        <MapIcon size={14} />
+                                                        <span className="text-xs">Distance Left</span>
+                                                    </div>
+                                                    <p className="font-bold text-gray-800 text-lg">
+                                                        {((parseFloat(estimatedRide?.distance?.split(' ')[0] || "2.5") || 2.5) * (1 - tripProgress / 100)).toFixed(1)} km
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div className="flex items-center gap-4 mb-6">
+                                            <img src="https://picsum.photos/200/200?random=2" alt="Driver" className="w-16 h-16 rounded-full object-cover ring-2 ring-brand-100" />
+                                            <div className="flex-1">
+                                                <h3 className="font-bold text-lg">Ibrahim Musa</h3>
+                                                <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
+                                                    <div className="flex items-center gap-1 bg-yellow-50 px-1.5 py-0.5 rounded text-yellow-700 font-medium">
+                                                        <Star className="w-3 h-3 fill-current" /> 4.9
+                                                    </div>
+                                                    <span className="text-gray-300">|</span>
+                                                    <span className="font-medium text-gray-900">ABJ-492-KL</span>
+                                                    <span className="text-gray-300">|</span>
+                                                    <span className="capitalize">{selectedVehicle?.toLowerCase()}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-3 mb-6">
+                                            <button className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 font-medium text-gray-700"><Phone size={18} /> Call</button>
+                                            <button className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 font-medium text-gray-700"><MessageSquare size={18} /> Chat</button>
+                                            <button onClick={handleShareRide} className="flex-none flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 font-medium text-gray-700"><Share2 size={18} /></button>
+                                        </div>
+                                        {tripStatus === 'in_progress' && (
+                                            <div className="mb-4">
+                                                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                                    <div className="h-full bg-brand-500 transition-all duration-1000 ease-linear" style={{ width: `${tripProgress}%` }}></div>
+                                                </div>
+                                                <div className="flex justify-between text-xs text-gray-400 mt-2 font-medium">
+                                                    <span>Pickup</span>
+                                                    <span>Dropoff</span>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {tripStatus === 'arriving' && (
+                                            <Button variant="danger" className="w-full py-3 text-lg font-bold shadow-md" onClick={handleCancelRide}>Cancel Ride</Button>
+                                        )}
+
+                                        <div className="mt-8 flex justify-center">
+                                            <PanicButton onPanic={() => onNotify('alert', 'EMERGENCY ALERT SENT to your contacts and security team!')} />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {tripStatus === 'completed' && (
+                                <div className="p-8 text-center animate-in zoom-in duration-300">
+                                    <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                        <CheckCircle className="w-10 h-10 text-green-600" />
+                                    </div>
+                                    <h2 className="text-2xl font-bold text-gray-900 mb-2">You arrived!</h2>
+                                    <p className="text-gray-500 mb-8">Hope you enjoyed your ride with Ibrahim.</p>
+                                    <div className="bg-gray-50 rounded-xl p-4 mb-8">
+                                        <p className="text-sm text-gray-500 mb-1">Total Fare</p>
+                                        <p className="text-3xl font-bold text-gray-900">{CURRENCY}{calculateFare(selectedVehicle || VehicleType.KEKE, estimatedRide?.fare || 5)}</p>
+                                    </div>
+                                    <div className="flex justify-center gap-2 mb-8">
+                                        {[1, 2, 3, 4, 5].map(star => <Star key={star} className="w-8 h-8 text-yellow-400 fill-current cursor-pointer hover:scale-110 transition-transform" />)}
+                                    </div>
+                                    <Button className="w-full" onClick={() => resetRide(true)}>Done</Button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    {viewState === 'history' && (
+                        <div className="bg-white md:rounded-2xl shadow-2xl h-[600px] flex flex-col">
+                            <div className="p-4 border-b border-gray-100 flex justify-between items-center">
+                                <h3 className="font-bold text-lg">Your Trips</h3>
+                                <button onClick={() => setViewState('booking')} className="p-2 hover:bg-gray-100 rounded-full"><X size={20} /></button>
+                            </div>
+                            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                                {history.length === 0 ? <div className="text-center py-10 text-gray-500">No rides yet.</div> : history.map((ride) => {
+                                    const Icon = VEHICLE_ICONS[ride.vehicle as VehicleType] || VEHICLE_ICONS.KEKE;
+                                    return (
+                                        <div key={ride.id} className="flex items-start justify-between p-4 border border-gray-100 rounded-xl hover:shadow-sm transition-shadow">
+                                            <div className="flex items-start gap-4">
+                                                <div className="p-3 bg-gray-50 rounded-lg"><Icon size={20} className="text-gray-600" /></div>
                                                 <div>
-                                                    <p className="text-xs text-brand-600 font-bold uppercase tracking-wider">Estimated Arrival</p>
-                                                    <div className="flex items-baseline gap-2">
-                                                        <p className="text-2xl font-bold text-brand-900">
-                                                            {Math.max(1, Math.ceil((parseInt(estimatedRide?.duration || "15") || 15) * (1 - tripProgress / 100)))} mins
-                                                        </p>
-                                                        <span className="text-sm text-brand-700 font-medium bg-brand-100 px-2 py-0.5 rounded">
-                                                            {(() => {
-                                                                const minsRemaining = Math.max(1, Math.ceil((parseInt(estimatedRide?.duration || "15") || 15) * (1 - tripProgress / 100)));
-                                                                const arrivalTime = new Date(Date.now() + minsRemaining * 60000);
-                                                                return arrivalTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-                                                            })()}
-                                                        </span>
+                                                    <h4 className="font-bold text-gray-900">{ride.pickup} to {ride.dropoff}</h4>
+                                                    <p className="text-sm text-gray-500 mt-1 capitalize">{ride.date} • {ride.vehicle?.toLowerCase()}</p>
+                                                    <div className="flex items-center gap-1 mt-2">
+                                                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                                                        <span className="text-xs font-medium text-gray-600">{ride.status}</span>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="text-right">
-                                                <div className="flex items-center justify-end gap-1 text-gray-500 mb-1">
-                                                    <MapIcon size={14} />
-                                                    <span className="text-xs">Distance Left</span>
-                                                </div>
-                                                <p className="font-bold text-gray-800 text-lg">
-                                                    {((parseFloat(estimatedRide?.distance?.split(' ')[0] || "2.5") || 2.5) * (1 - tripProgress / 100)).toFixed(1)} km
-                                                </p>
-                                            </div>
+                                            <span className="font-bold text-gray-900">{CURRENCY}{ride.price}</span>
                                         </div>
-                                    )}
-
-                                    <div className="flex items-center gap-4 mb-6">
-                                        <img src="https://picsum.photos/200/200?random=2" alt="Driver" className="w-16 h-16 rounded-full object-cover ring-2 ring-brand-100" />
-                                        <div className="flex-1">
-                                            <h3 className="font-bold text-lg">Ibrahim Musa</h3>
-                                            <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-                                                <div className="flex items-center gap-1 bg-yellow-50 px-1.5 py-0.5 rounded text-yellow-700 font-medium">
-                                                    <Star className="w-3 h-3 fill-current" /> 4.9
-                                                </div>
-                                                <span className="text-gray-300">|</span>
-                                                <span className="font-medium text-gray-900">ABJ-492-KL</span>
-                                                <span className="text-gray-300">|</span>
-                                                <span className="capitalize">{selectedVehicle?.toLowerCase()}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-3 mb-6">
-                                        <button className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 font-medium text-gray-700"><Phone size={18} /> Call</button>
-                                        <button className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 font-medium text-gray-700"><MessageSquare size={18} /> Chat</button>
-                                        <button onClick={handleShareRide} className="flex-none flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 font-medium text-gray-700"><Share2 size={18} /></button>
-                                    </div>
-                                    {tripStatus === 'in_progress' && (
-                                        <div className="mb-4">
-                                            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                                                <div className="h-full bg-brand-500 transition-all duration-1000 ease-linear" style={{ width: `${tripProgress}%` }}></div>
-                                            </div>
-                                            <div className="flex justify-between text-xs text-gray-400 mt-2 font-medium">
-                                                <span>Pickup</span>
-                                                <span>Dropoff</span>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {tripStatus === 'arriving' && (
-                                        <Button variant="danger" className="w-full py-3 text-lg font-bold shadow-md" onClick={handleCancelRide}>Cancel Ride</Button>
-                                    )}
-
-                                    <div className="mt-8 flex justify-center">
-                                        <PanicButton onPanic={() => onNotify('alert', 'EMERGENCY ALERT SENT to your contacts and security team!')} />
-                                    </div>
-                                </div>
+                                    );
+                                })}
                             </div>
-                        )}
-
-                        {tripStatus === 'completed' && (
-                            <div className="p-8 text-center animate-in zoom-in duration-300">
-                                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <CheckCircle className="w-10 h-10 text-green-600" />
-                                </div>
-                                <h2 className="text-2xl font-bold text-gray-900 mb-2">You arrived!</h2>
-                                <p className="text-gray-500 mb-8">Hope you enjoyed your ride with Ibrahim.</p>
-                                <div className="bg-gray-50 rounded-xl p-4 mb-8">
-                                    <p className="text-sm text-gray-500 mb-1">Total Fare</p>
-                                    <p className="text-3xl font-bold text-gray-900">{CURRENCY}{calculateFare(selectedVehicle || VehicleType.KEKE, estimatedRide?.fare || 5)}</p>
-                                </div>
-                                <div className="flex justify-center gap-2 mb-8">
-                                    {[1, 2, 3, 4, 5].map(star => <Star key={star} className="w-8 h-8 text-yellow-400 fill-current cursor-pointer hover:scale-110 transition-transform" />)}
-                                </div>
-                                <Button className="w-full" onClick={() => resetRide(true)}>Done</Button>
-                            </div>
-                        )}
-                    </div>
-                )}
-                {viewState === 'history' && (
-                    <div className="bg-white md:rounded-2xl shadow-2xl h-[600px] flex flex-col">
-                        <div className="p-4 border-b border-gray-100 flex justify-between items-center">
-                            <h3 className="font-bold text-lg">Your Trips</h3>
-                            <button onClick={() => setViewState('booking')} className="p-2 hover:bg-gray-100 rounded-full"><X size={20} /></button>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                            {history.length === 0 ? <div className="text-center py-10 text-gray-500">No rides yet.</div> : history.map((ride) => {
-                                const Icon = VEHICLE_ICONS[ride.vehicle as VehicleType] || VEHICLE_ICONS.KEKE;
-                                return (
-                                    <div key={ride.id} className="flex items-start justify-between p-4 border border-gray-100 rounded-xl hover:shadow-sm transition-shadow">
-                                        <div className="flex items-start gap-4">
-                                            <div className="p-3 bg-gray-50 rounded-lg"><Icon size={20} className="text-gray-600" /></div>
+                    )}
+
+                    {viewState === 'wallet' && (
+                        <div className="bg-white md:rounded-2xl shadow-2xl h-[600px] flex flex-col">
+                            <div className="p-4 border-b border-gray-100 flex justify-between items-center">
+                                <h3 className="font-bold text-lg">Wallet</h3>
+                                <button onClick={() => setViewState('booking')} className="p-2 hover:bg-gray-100 rounded-full"><X size={20} /></button>
+                            </div>
+                            <div className="p-6">
+                                <div className="bg-brand-600 rounded-2xl p-6 text-white shadow-xl mb-6 relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 p-8 opacity-10"><Wallet size={100} /></div>
+                                    <p className="text-brand-100 text-sm mb-1">Available Balance</p>
+                                    <h2 className="text-3xl font-bold mb-6">{CURRENCY}{walletBalance.toLocaleString()}</h2>
+                                    <button onClick={() => setWalletBalance(b => b + 5000)} className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 backdrop-blur-sm transition-colors"><Plus size={16} /> Add Funds</button>
+                                </div>
+                                <h4 className="font-bold text-gray-800 mb-4">Recent Transactions</h4>
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600"><Plus size={14} /></div>
                                             <div>
-                                                <h4 className="font-bold text-gray-900">{ride.pickup} to {ride.dropoff}</h4>
-                                                <p className="text-sm text-gray-500 mt-1 capitalize">{ride.date} • {ride.vehicle?.toLowerCase()}</p>
-                                                <div className="flex items-center gap-1 mt-2">
-                                                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                                                    <span className="text-xs font-medium text-gray-600">{ride.status}</span>
-                                                </div>
+                                                <p className="font-medium text-sm">Wallet Top-up</p>
+                                                <p className="text-xs text-gray-500">Today, 9:00 AM</p>
                                             </div>
                                         </div>
-                                        <span className="font-bold text-gray-900">{CURRENCY}{ride.price}</span>
+                                        <span className="font-bold text-green-600">+{CURRENCY}5,000</span>
                                     </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                )}
-
-                {viewState === 'wallet' && (
-                    <div className="bg-white md:rounded-2xl shadow-2xl h-[600px] flex flex-col">
-                        <div className="p-4 border-b border-gray-100 flex justify-between items-center">
-                            <h3 className="font-bold text-lg">Wallet</h3>
-                            <button onClick={() => setViewState('booking')} className="p-2 hover:bg-gray-100 rounded-full"><X size={20} /></button>
-                        </div>
-                        <div className="p-6">
-                            <div className="bg-brand-600 rounded-2xl p-6 text-white shadow-xl mb-6 relative overflow-hidden">
-                                <div className="absolute top-0 right-0 p-8 opacity-10"><Wallet size={100} /></div>
-                                <p className="text-brand-100 text-sm mb-1">Available Balance</p>
-                                <h2 className="text-3xl font-bold mb-6">{CURRENCY}{walletBalance.toLocaleString()}</h2>
-                                <button onClick={() => setWalletBalance(b => b + 5000)} className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 backdrop-blur-sm transition-colors"><Plus size={16} /> Add Funds</button>
-                            </div>
-                            <h4 className="font-bold text-gray-800 mb-4">Recent Transactions</h4>
-                            <div className="space-y-3">
-                                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600"><Plus size={14} /></div>
-                                        <div>
-                                            <p className="font-medium text-sm">Wallet Top-up</p>
-                                            <p className="text-xs text-gray-500">Today, 9:00 AM</p>
+                                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600"><Navigation size={14} /></div>
+                                            <div>
+                                                <p className="font-medium text-sm">Ride Payment</p>
+                                                <p className="text-xs text-gray-500">Yesterday</p>
+                                            </div>
                                         </div>
+                                        <span className="font-bold text-gray-900">-{CURRENCY}450</span>
                                     </div>
-                                    <span className="font-bold text-green-600">+{CURRENCY}5,000</span>
-                                </div>
-                                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600"><Navigation size={14} /></div>
-                                        <div>
-                                            <p className="font-medium text-sm">Ride Payment</p>
-                                            <p className="text-xs text-gray-500">Yesterday</p>
-                                        </div>
-                                    </div>
-                                    <span className="font-bold text-gray-900">-{CURRENCY}450</span>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                )}
-            </div>
-        </div >
+                    )}
+                </div>
+            </div >
         </>
     );
 };
