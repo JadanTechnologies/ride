@@ -99,7 +99,7 @@ const MapComponent = ({ userLocation, drivers, assignedDriver, destination, onSe
             {assignedDriver && !isNaN(assignedDriver.lat) && (
                 <Marker
                     position={[assignedDriver.lat, assignedDriver.lng]}
-                    icon={createMapIcon(assignedDriver.type.toLowerCase(), assignedDriver.heading || 0) || userIcon}
+                    icon={createMapIcon((assignedDriver.type || 'keke').toLowerCase(), assignedDriver.heading || 0) || userIcon}
                 >
                     <Popup>Your Driver</Popup>
                 </Marker>
@@ -315,7 +315,12 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
 
         const t2 = setTimeout(() => {
             setTripStatus('arrived');
-            setAssignedDriverPos(userLocation);
+            // FIX: Don't replace entire object with userLocation (missing type), merge coordinates instead
+            setAssignedDriverPos((prev: any) => ({
+                ...prev,
+                lat: userLocation.lat,
+                lng: userLocation.lng
+            }));
             onNotify('info', "Your driver has arrived!");
         }, 8000);
 
