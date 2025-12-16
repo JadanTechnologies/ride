@@ -9,7 +9,8 @@ export enum UserRole {
 export enum VehicleType {
   KEKE = 'KEKE',     // Tricycle
   OKADA = 'OKADA',   // Motorcycle
-  BUS = 'BUS'        // Mini Bus / Danfo
+  BUS = 'BUS',       // Mini Bus / Danfo
+  LOGISTICS = 'LOGISTICS' // Delivery Van/Bike
 }
 
 export enum RideStatus {
@@ -101,7 +102,7 @@ export interface Pricing {
 }
 
 export interface Dispute {
-  id:string;
+  id: string;
   complainant: string;
   respondent: string;
   issue: string;

@@ -16,12 +16,14 @@ export const PRICING = {
   [VehicleType.KEKE]: { base: 200, perKm: 100, isActive: true },
   [VehicleType.OKADA]: { base: 150, perKm: 80, isActive: true },
   [VehicleType.BUS]: { base: 300, perKm: 150, isActive: true },
+  [VehicleType.LOGISTICS]: { base: 500, perKm: 200, isActive: true },
 };
 
 export const VEHICLE_ICONS = {
-  [VehicleType.KEKE]: Truck, 
+  [VehicleType.KEKE]: Truck,
   [VehicleType.OKADA]: Bike,
   [VehicleType.BUS]: Bus,
+  [VehicleType.LOGISTICS]: Truck, // Reusing Truck or we can import Package if desired
 };
 
 export const MOCK_USER = {
