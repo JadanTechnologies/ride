@@ -673,4 +673,3 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
             </>
             );
 };
-            ```
