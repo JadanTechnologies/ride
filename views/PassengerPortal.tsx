@@ -568,6 +568,8 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
                                                     <span>Dropoff</span>
                                                 </div>
                                             </div>
+                                        )}
+
                                         {tripStatus === 'arriving' && (
                                             <Button variant="danger" className="w-full py-3 text-lg font-bold shadow-md" onClick={handleCancelRide}>Cancel Ride</Button>
                                         )}
@@ -575,101 +577,98 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ user, pricing,
                                         <div className="mt-8 flex justify-center">
                                             <PanicButton onPanic={() => onNotify('alert', 'EMERGENCY ALERT SENT to your contacts and security team!')} />
                                         </div>
-                                    </div>
-                                </div>
-                            )}
 
-                            {tripStatus === 'completed' && (
-                                <div className="p-8 text-center animate-in zoom-in duration-300">
-                                    <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                        <CheckCircle className="w-10 h-10 text-green-600" />
+                                        {tripStatus === 'completed' && (
+                                            <div className="p-8 text-center animate-in zoom-in duration-300">
+                                                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                                    <CheckCircle className="w-10 h-10 text-green-600" />
+                                                </div>
+                                                <h2 className="text-2xl font-bold text-gray-900 mb-2">You arrived!</h2>
+                                                <p className="text-gray-500 mb-8">Hope you enjoyed your ride with Ibrahim.</p>
+                                                <div className="bg-gray-50 rounded-xl p-4 mb-8">
+                                                    <p className="text-sm text-gray-500 mb-1">Total Fare</p>
+                                                    <p className="text-3xl font-bold text-gray-900">{CURRENCY}{calculateFare(selectedVehicle || VehicleType.KEKE, estimatedRide?.fare || 5)}</p>
+                                                </div>
+                                                <div className="flex justify-center gap-2 mb-8">
+                                                    {[1, 2, 3, 4, 5].map(star => <Star key={star} className="w-8 h-8 text-yellow-400 fill-current cursor-pointer hover:scale-110 transition-transform" />)}
+                                                </div>
+                                                <Button className="w-full" onClick={() => resetRide(true)}>Done</Button>
+                                            </div>
+                                        )}
                                     </div>
-                                    <h2 className="text-2xl font-bold text-gray-900 mb-2">You arrived!</h2>
-                                    <p className="text-gray-500 mb-8">Hope you enjoyed your ride with Ibrahim.</p>
-                                    <div className="bg-gray-50 rounded-xl p-4 mb-8">
-                                        <p className="text-sm text-gray-500 mb-1">Total Fare</p>
-                                        <p className="text-3xl font-bold text-gray-900">{CURRENCY}{calculateFare(selectedVehicle || VehicleType.KEKE, estimatedRide?.fare || 5)}</p>
-                                    </div>
-                                    <div className="flex justify-center gap-2 mb-8">
-                                        {[1, 2, 3, 4, 5].map(star => <Star key={star} className="w-8 h-8 text-yellow-400 fill-current cursor-pointer hover:scale-110 transition-transform" />)}
-                                    </div>
-                                    <Button className="w-full" onClick={() => resetRide(true)}>Done</Button>
-                                </div>
-                            )}
-                        </div>
                     )}
 
-                    {viewState === 'history' && (
-                        <div className="bg-white md:rounded-2xl shadow-2xl h-[600px] flex flex-col">
-                            <div className="p-4 border-b border-gray-100 flex justify-between items-center">
-                                <h3 className="font-bold text-lg">Your Trips</h3>
-                                <button onClick={() => setViewState('booking')} className="p-2 hover:bg-gray-100 rounded-full"><X size={20} /></button>
-                            </div>
-                            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                                {history.length === 0 ? <div className="text-center py-10 text-gray-500">No rides yet.</div> : history.map((ride) => {
-                                    const Icon = VEHICLE_ICONS[ride.vehicle as VehicleType] || VEHICLE_ICONS.KEKE;
-                                    return (
-                                        <div key={ride.id} className="flex items-start justify-between p-4 border border-gray-100 rounded-xl hover:shadow-sm transition-shadow">
-                                            <div className="flex items-start gap-4">
-                                                <div className="p-3 bg-gray-50 rounded-lg"><Icon size={20} className="text-gray-600" /></div>
-                                                <div>
-                                                    <h4 className="font-bold text-gray-900">{ride.pickup} to {ride.dropoff}</h4>
-                                                    <p className="text-sm text-gray-500 mt-1 capitalize">{ride.date} • {ride.vehicle?.toLowerCase()}</p>
-                                                    <div className="flex items-center gap-1 mt-2">
-                                                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                                                        <span className="text-xs font-medium text-gray-600">{ride.status}</span>
+                                    {viewState === 'history' && (
+                                        <div className="bg-white md:rounded-2xl shadow-2xl h-[600px] flex flex-col">
+                                            <div className="p-4 border-b border-gray-100 flex justify-between items-center">
+                                                <h3 className="font-bold text-lg">Your Trips</h3>
+                                                <button onClick={() => setViewState('booking')} className="p-2 hover:bg-gray-100 rounded-full"><X size={20} /></button>
+                                            </div>
+                                            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                                                {history.length === 0 ? <div className="text-center py-10 text-gray-500">No rides yet.</div> : history.map((ride) => {
+                                                    const Icon = VEHICLE_ICONS[ride.vehicle as VehicleType] || VEHICLE_ICONS.KEKE;
+                                                    return (
+                                                        <div key={ride.id} className="flex items-start justify-between p-4 border border-gray-100 rounded-xl hover:shadow-sm transition-shadow">
+                                                            <div className="flex items-start gap-4">
+                                                                <div className="p-3 bg-gray-50 rounded-lg"><Icon size={20} className="text-gray-600" /></div>
+                                                                <div>
+                                                                    <h4 className="font-bold text-gray-900">{ride.pickup} to {ride.dropoff}</h4>
+                                                                    <p className="text-sm text-gray-500 mt-1 capitalize">{ride.date} • {ride.vehicle?.toLowerCase()}</p>
+                                                                    <div className="flex items-center gap-1 mt-2">
+                                                                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                                                                        <span className="text-xs font-medium text-gray-600">{ride.status}</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <span className="font-bold text-gray-900">{CURRENCY}{ride.price}</span>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {viewState === 'wallet' && (
+                                        <div className="bg-white md:rounded-2xl shadow-2xl h-[600px] flex flex-col">
+                                            <div className="p-4 border-b border-gray-100 flex justify-between items-center">
+                                                <h3 className="font-bold text-lg">Wallet</h3>
+                                                <button onClick={() => setViewState('booking')} className="p-2 hover:bg-gray-100 rounded-full"><X size={20} /></button>
+                                            </div>
+                                            <div className="p-6">
+                                                <div className="bg-brand-600 rounded-2xl p-6 text-white shadow-xl mb-6 relative overflow-hidden">
+                                                    <div className="absolute top-0 right-0 p-8 opacity-10"><Wallet size={100} /></div>
+                                                    <p className="text-brand-100 text-sm mb-1">Available Balance</p>
+                                                    <h2 className="text-3xl font-bold mb-6">{CURRENCY}{walletBalance.toLocaleString()}</h2>
+                                                    <button onClick={() => setWalletBalance(b => b + 5000)} className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 backdrop-blur-sm transition-colors"><Plus size={16} /> Add Funds</button>
+                                                </div>
+                                                <h4 className="font-bold text-gray-800 mb-4">Recent Transactions</h4>
+                                                <div className="space-y-3">
+                                                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600"><Plus size={14} /></div>
+                                                            <div>
+                                                                <p className="font-medium text-sm">Wallet Top-up</p>
+                                                                <p className="text-xs text-gray-500">Today, 9:00 AM</p>
+                                                            </div>
+                                                        </div>
+                                                        <span className="font-bold text-green-600">+{CURRENCY}5,000</span>
+                                                    </div>
+                                                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600"><Navigation size={14} /></div>
+                                                            <div>
+                                                                <p className="font-medium text-sm">Ride Payment</p>
+                                                                <p className="text-xs text-gray-500">Yesterday</p>
+                                                            </div>
+                                                        </div>
+                                                        <span className="font-bold text-gray-900">-{CURRENCY}450</span>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <span className="font-bold text-gray-900">{CURRENCY}{ride.price}</span>
                                         </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    )}
-
-                    {viewState === 'wallet' && (
-                        <div className="bg-white md:rounded-2xl shadow-2xl h-[600px] flex flex-col">
-                            <div className="p-4 border-b border-gray-100 flex justify-between items-center">
-                                <h3 className="font-bold text-lg">Wallet</h3>
-                                <button onClick={() => setViewState('booking')} className="p-2 hover:bg-gray-100 rounded-full"><X size={20} /></button>
-                            </div>
-                            <div className="p-6">
-                                <div className="bg-brand-600 rounded-2xl p-6 text-white shadow-xl mb-6 relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 p-8 opacity-10"><Wallet size={100} /></div>
-                                    <p className="text-brand-100 text-sm mb-1">Available Balance</p>
-                                    <h2 className="text-3xl font-bold mb-6">{CURRENCY}{walletBalance.toLocaleString()}</h2>
-                                    <button onClick={() => setWalletBalance(b => b + 5000)} className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 backdrop-blur-sm transition-colors"><Plus size={16} /> Add Funds</button>
+                                    )}
                                 </div>
-                                <h4 className="font-bold text-gray-800 mb-4">Recent Transactions</h4>
-                                <div className="space-y-3">
-                                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600"><Plus size={14} /></div>
-                                            <div>
-                                                <p className="font-medium text-sm">Wallet Top-up</p>
-                                                <p className="text-xs text-gray-500">Today, 9:00 AM</p>
-                                            </div>
-                                        </div>
-                                        <span className="font-bold text-green-600">+{CURRENCY}5,000</span>
-                                    </div>
-                                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600"><Navigation size={14} /></div>
-                                            <div>
-                                                <p className="font-medium text-sm">Ride Payment</p>
-                                                <p className="text-xs text-gray-500">Yesterday</p>
-                                            </div>
-                                        </div>
-                                        <span className="font-bold text-gray-900">-{CURRENCY}450</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </div>
             </div>
         </>
-    );
+                );
 };
