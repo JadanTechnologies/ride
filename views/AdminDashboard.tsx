@@ -16,6 +16,7 @@ import SupportManagement from '../components/SupportManagement';
 import UserManagement from '../components/UserManagement';
 import { FinancialReports } from '../components/FinancialReports';
 import CollapsibleNavBar from '../components/CollapsibleNavBar';
+import LogisticsManagement from '../components/LogisticsManagement';
 
 // Fix for Leaflet import in ESM environments
 const Leaflet = (L as any).default ?? L;
@@ -397,63 +398,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         return <FinancialReports />;
 
       case 'logistics':
-        return (
-          <div className="space-y-6">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <h3 className="text-lg font-bold text-gray-800 mb-4">Logistics Management</h3>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white p-4 rounded-xl">
-                  <p className="text-sm text-blue-100 mb-1">Active Orders</p>
-                  <p className="text-3xl font-bold">24</p>
-                </div>
-                <div className="bg-gradient-to-br from-green-600 to-green-700 text-white p-4 rounded-xl">
-                  <p className="text-sm text-green-100 mb-1">Delivered Today</p>
-                  <p className="text-3xl font-bold">156</p>
-                </div>
-                <div className="bg-gradient-to-br from-purple-600 to-purple-700 text-white p-4 rounded-xl">
-                  <p className="text-sm text-purple-100 mb-1">Revenue</p>
-                  <p className="text-3xl font-bold">{CURRENCY}2.4M</p>
-                </div>
-                <div className="bg-gradient-to-br from-orange-600 to-orange-700 text-white p-4 rounded-xl">
-                  <p className="text-sm text-orange-100 mb-1">Active Vendors</p>
-                  <p className="text-3xl font-bold">34</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="p-6 border-b border-gray-100"><h3 className="font-bold text-gray-800">Active Logistics Orders</h3></div>
-              <table className="w-full text-left text-sm">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="p-4 font-semibold text-gray-700">Order ID</th>
-                    <th className="p-4 font-semibold text-gray-700">Customer</th>
-                    <th className="p-4 font-semibold text-gray-700">Route</th>
-                    <th className="p-4 font-semibold text-gray-700">Vehicle</th>
-                    <th className="p-4 font-semibold text-gray-700">Status</th>
-                    <th className="p-4 font-semibold text-gray-700 text-right">Fare</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {[
-                    { id: 'LOG-001', customer: 'Tech Startup', from: 'Lekki', to: 'VI', vehicle: 'Keke', status: 'in_transit', fare: 8500 },
-                    { id: 'LOG-002', customer: 'Fashion Hub', from: 'Yaba', to: 'Ikeja', vehicle: 'Bus', status: 'delivered', fare: 12000 },
-                    { id: 'LOG-003', customer: 'E-commerce Co', from: 'Surulere', to: 'Lekki', vehicle: 'Okada', status: 'assigned', fare: 6200 }
-                  ].map(order => (
-                    <tr key={order.id} className="hover:bg-gray-50">
-                      <td className="p-4 font-medium text-gray-900">{order.id}</td>
-                      <td className="p-4 text-gray-600">{order.customer}</td>
-                      <td className="p-4 text-gray-600">{order.from} → {order.to}</td>
-                      <td className="p-4 capitalize text-gray-600">{order.vehicle}</td>
-                      <td className="p-4"><span className={`px-2 py-1 rounded text-xs font-bold ${order.status === 'in_transit' ? 'bg-blue-100 text-blue-700' : order.status === 'delivered' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{order.status.replace('_', ' ').toUpperCase()}</span></td>
-                      <td className="p-4 text-right font-semibold text-gray-900">{CURRENCY}{order.fare}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        );
+        return <LogisticsManagement />;
 
       case 'settings':
         return <AdminSettingsPanel />;
@@ -557,7 +502,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         hasNotifications={pendingWithdrawalsCount > 0}
       />
 
-      <div className="relative min-h-[calc(100vh-4rem)] w-full flex flex-col md:flex-row overflow-hidden bg-gray-100 md:pt-16">
+      <div className="relative min-h-[calc(100vh-4rem)] w-full flex flex-col md:flex-row overflow-hidden bg-gray-100 md:pt-16 md:pl-64">
         {/* Main Content Panel */}
         <div className="flex-1 relative overflow-hidden">
           <div className="p-6 md:p-8">

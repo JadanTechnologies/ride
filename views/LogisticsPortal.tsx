@@ -101,6 +101,9 @@ export const LogisticsPortal: React.FC<LogisticsPortalProps> = ({ user, pricing,
 
   const navItems = getNavItems();
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+
   const handleCreateOrder = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newOrder.customer || !newOrder.pickupAddress || !newOrder.dropoffAddress) {
@@ -124,6 +127,19 @@ export const LogisticsPortal: React.FC<LogisticsPortalProps> = ({ user, pricing,
     onNotify('success', 'Order created successfully!');
     setViewState('orders');
   };
+
+  const filteredOrders = orders.filter(o => {
+    const matchesSearch = o.id.includes(searchQuery) || o.customer.toLowerCase().includes(searchQuery.toLowerCase()) || o.pickupAddress.toLowerCase().includes(searchQuery.toLowerCase()) || o.dropoffAddress.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFilter = statusFilter === 'all' || o.status === statusFilter;
+    
+    if (user?.role === UserRole.LOGISTICS) {
+      return o.customer === user.name && matchesSearch && matchesFilter;
+    }
+    if (user?.role === UserRole.DRIVER) {
+      return o.driver === user.name && matchesSearch && matchesFilter;
+    }
+    return matchesSearch && matchesFilter; // Admin sees all
+  });
 
   const handleCompleteOrder = (orderId: string) => {
     setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'delivered', progress: 100 } : o));
@@ -340,12 +356,24 @@ export const LogisticsPortal: React.FC<LogisticsPortalProps> = ({ user, pricing,
               <h3 className="text-xl font-bold text-gray-900 mb-4">
                 {user?.role === UserRole.LOGISTICS ? 'My Requests' : user?.role === UserRole.ADMIN ? 'All Orders' : 'Orders'}
               </h3>
+              <div className="mb-4">
+                <input
+                  type="text"
+                  placeholder="Search orders..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg"
+                />
+              </div>
+              <div className="flex gap-2 mb-4">
+                <Button onClick={() => setStatusFilter('all')} variant={statusFilter === 'all' ? 'primary' : 'secondary'}>All</Button>
+                <Button onClick={() => setStatusFilter('pending_approval')} variant={statusFilter === 'pending_approval' ? 'primary' : 'secondary'}>Pending</Button>
+                <Button onClick={() => setStatusFilter('assigned')} variant={statusFilter === 'assigned' ? 'primary' : 'secondary'}>Assigned</Button>
+                <Button onClick={() => setStatusFilter('in_transit')} variant={statusFilter === 'in_transit' ? 'primary' : 'secondary'}>In Transit</Button>
+                <Button onClick={() => setStatusFilter('delivered')} variant={statusFilter === 'delivered' ? 'primary' : 'secondary'}>Delivered</Button>
+              </div>
               <div className="space-y-3">
-                {orders.filter(o => {
-                  if (user?.role === UserRole.LOGISTICS) return o.customer === user.name; // Assuming company name is user.name
-                  if (user?.role === UserRole.DRIVER) return o.driver === user.name;
-                  return o.status !== 'delivered'; // Admin sees all active
-                }).map(order => (
+                {filteredOrders.map(order => (
                   <div key={order.id} className="border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => { setSelectedOrder(order); setViewState('tracking'); }}>
                     <div className="flex justify-between items-start mb-2">
                       <div>
@@ -374,6 +402,9 @@ export const LogisticsPortal: React.FC<LogisticsPortalProps> = ({ user, pricing,
                     {order.driver && <p className="text-xs text-gray-500 mt-1">Driver: {order.driver}</p>}
                   </div>
                 ))}
+                {filteredOrders.length === 0 && (
+                  <p className="text-center py-8 text-gray-500">No orders found.</p>
+                )}
               </div>
             </div>
           )}
